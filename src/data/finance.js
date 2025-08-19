@@ -1,0 +1,21 @@
+export const FINANCE = [
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 275, date: '2025-03-27', time: '08:57', apt: '06',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +50.00 },
+  { id: 274, date: '2025-03-27', time: '15:22', apt: '07',  title: 'PAGAMENTO VIA DINHEIRO', payment: 'PAGAMENTO VIA CARTÃO DE CRÉDITO',   amount:   +5.70 },
+  { id: 271, date: '2025-03-26', time: '15:22', apt: '07',  title: 'CONSUMO EXTRA',          payment: 'PAGAMENTO VIA CARTÃO DE CRÉDITO',   amount:  +50.00 },
+  { id: 275, date: '2025-03-19', time: '08:45', apt: '05',  title: 'RELATÓRIO',              payment: 'PAGAMENTO VIA DINHEIRO',            amount:  +89.99 },
+  { id: 128, date: '2025-03-13', time: '21:22', apt: '02',  title: 'RELATÓRIO TESTE',        payment: 'PAGAMENTO VIA PIX',                 amount:   +0.01 },
+  { id: 126, date: '2025-03-13', time: '08:12', apt: '02',  title: 'TESTE DE DATA NOVAMENTE',payment: 'PAGAMENTO VIA DINHEIRO',            amount:   -5.00 }
+];

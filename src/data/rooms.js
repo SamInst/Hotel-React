@@ -1,0 +1,21 @@
+export const ROOMS = [
+  {numero:'Quarto 101',status:1,tipo:'SIMPLES',pessoas:1,hospedes:1,representante:'JOAO ALBERTO DA SILVA CUNHA',entrada:'21/07/2025',saida:'23/07/2025'},
+  {numero:'Quarto 102',status:2,tipo:'SIMPLES',pessoas:1},
+  {numero:'Quarto 103',status:3,tipo:'SIMPLES',pessoas:1},
+  {numero:'Quarto 104',status:4,tipo:'SIMPLES',pessoas:1},
+  {numero:'Quarto 201',status:1,tipo:'DUPLO',pessoas:2,hospedes:2,representante:'MARIA LIMA',entrada:'22/07/2025',saida:'24/07/2025'},
+  {numero:'Quarto 202',status:2,tipo:'DUPLO',pessoas:2},
+  {numero:'Quarto 203',status:3,tipo:'DUPLO',pessoas:2},
+  {numero:'Quarto 204',status:4,tipo:'DUPLO',pessoas:2},
+  {numero:'Quarto 301',status:1,tipo:'TRIPLO',pessoas:3,hospedes:3,representante:'CARLOS EDUARDO',entrada:'20/07/2025',saida:'25/07/2025'},
+  {numero:'Quarto 302',status:2,tipo:'TRIPLO',pessoas:3},
+  {numero:'Quarto 303',status:3,tipo:'TRIPLO',pessoas:3},
+  {numero:'Quarto 304',status:4,tipo:'TRIPLO',pessoas:3},
+  {numero:'Suíte 401',status:1,tipo:'LUXO',pessoas:2,hospedes:2,representante:'ANA PAULA',entrada:'21/07/2025',saida:'28/07/2025'},
+  {numero:'Suíte 402',status:2,tipo:'LUXO',pessoas:2},
+  {numero:'Suíte 403',status:3,tipo:'LUXO',pessoas:2},
+  {numero:'Suíte 404',status:4,tipo:'LUXO',pessoas:2},
+  {numero:'Suíte Presidencial 501',status:1,tipo:'PRESIDENCIAL',pessoas:4,hospedes:4,representante:'JOSÉ CARLOS',entrada:'15/07/2025',saida:'30/07/2025'},
+  {numero:'Suíte Presidencial 502',status:2,tipo:'PRESIDENCIAL',pessoas:4},
+  {numero:'Suíte Presidencial 503',status:6,tipo:'PRESIDENCIAL',pessoas:4}
+]
