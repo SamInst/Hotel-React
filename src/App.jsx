@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar.jsx";
 import { ApartmentsPage } from "./pages/ApartmentsPage.jsx";
 import PeopleRegister from "./pages/PeopleRegister.jsx";
-import { PlaceholderPage } from "./pages/PlaceholderPage.jsx";
 import FinancePage from "./pages/FinancePage.jsx";
 import PricesPage from './pages/PricesPage.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
+import ReservationsPage from './pages/ReservationsPage.jsx';
 
 export default function App() {
   const [page, setPage] = useState("dashboard");
@@ -62,10 +62,9 @@ export default function App() {
   {page === 'financeiro' && <FinancePage />}
   {page === 'precos' && <PricesPage />}
   {page === 'itens' && <ItemsPage />}
+  {page === 'reservas' && <ReservationsPage />}
 
-  {page !== 'apartamentos' && page !== 'dashboard' && page !== 'clientes' && page !== 'financeiro' && (
-    <PlaceholderPage title={page} />
-  )}
+  
 </section>
 
       </div>
