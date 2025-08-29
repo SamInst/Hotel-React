@@ -195,7 +195,7 @@ function ModernDashboard({ reservations, rooms, selectedDay, viewDate }) {
         />
         
         <StatCard
-          title="Próximas Chegadas"
+          title="Reservas Solicitadas pelo site"
           value={stats.upcomingArrivals}
           subtitle="Nos próximos 7 dias"
           color="#ed8936"
@@ -237,7 +237,7 @@ function ModernDashboard({ reservations, rooms, selectedDay, viewDate }) {
               fontWeight: 600, 
               color: '#2d3748' 
             }}>
-              Próximas Chegadas
+              Reservas Solicitadas pelo site
             </h3>
           </div>
           

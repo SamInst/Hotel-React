@@ -2,6 +2,8 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { Modal } from "../components/Modal.jsx";
 import ModernDashboard from "./ModernDashboard";
+import ReservationEditorModal from "../components/ReservationEditorModal.jsx";
+import NewReservationModal from "../components/NewReservationModal.jsx";
 
 const LABEL_W = 80;
 const DAY_W = 120;
@@ -20,6 +22,9 @@ const VIEW_H = "clamp(620px, 70vh, 820px)";
 // espaçamentos mais enxutos
 const BLOCK_GAP = 0;
 
+// Zona de handle para redimensionamento (px)
+const RESIZE_HANDLE_WIDTH = 8;
+
 const wk = (d) => d.toLocaleDateString("pt-BR", { weekday: "long" });
 const mon = (d) => d.toLocaleDateString("pt-BR", { month: "long" });
 const pad = (n) => String(n).padStart(2, "0");
@@ -36,6 +41,12 @@ export default function ReservationsPage() {
   const today = new Date();
   const todayKey = ymd(today);
 
+  // EDITOR SEPARADO
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorData, setEditorData] = useState(null);
+
+  const [newReservationOpen, setNewReservationOpen] = useState(false);
+
   const [viewDate, setViewDate] = useState(
     new Date(today.getFullYear(), today.getMonth(), 1)
   );
@@ -46,61 +57,49 @@ export default function ReservationsPage() {
   const [hoverDate, setHoverDate] = useState(null);
 
   const [openReview, setOpenReview] = useState(false);
-  const [openExisting, setOpenExisting] = useState(null);
   const [hoverResv, setHoverResv] = useState(null);
 
+  // apenas a célula sob o mouse (quarto x dia)
+  const [hoverCell, setHoverCell] = useState({ roomId: null, dayIndex: null });
+
+  // Estados para drag & drop
+  const [dragState, setDragState] = useState({
+    isDragging: false,
+    isResizing: false,
+    resizeType: null, // 'start' ou 'end'
+    reservationId: null,
+    initialMouseX: 0,
+    initialRoomId: 0,
+    initialStart: null,
+    initialEnd: null,
+    currentRoomId: 0,
+    currentStart: null,
+    currentEnd: null,
+  });
+
+  // Modal de confirmação
+  const [confirmAction, setConfirmAction] = useState({
+    open: false,
+    type: null, // 'move', 'resize'
+    reservation: null,
+    newRoomId: null,
+    newStart: null,
+    newEnd: null,
+  });
+
   // scrollers
-  const scrollerRef = useRef(null);   // corpo (vertical + horizontal)
-  const headXRef   = useRef(null);    // cabeçalho (apenas horizontal)
+  const scrollerRef = useRef(null); // corpo (vertical + horizontal)
+  const headXRef = useRef(null); // cabeçalho (apenas horizontal)
 
-  // colunas visíveis (primeira/última) para centralizar a etiqueta no trecho realmente visível
+  // colunas visíveis (primeira/última) para centralizar a etiqueta do mês
   const [visibleCols, setVisibleCols] = useState({ first: 0, last: 30 });
-
-  useEffect(() => {
-    const body = scrollerRef.current;
-    const head = headXRef.current;
-    if (!body || !head) return;
-
-    const syncAndMeasure = () => {
-      // sincroniza cabeçalho com a rolagem horizontal do corpo
-      if (head.scrollLeft !== body.scrollLeft) head.scrollLeft = body.scrollLeft;
-
-      // mede colunas visíveis para centralizar as etiquetas
-      const sx = body.scrollLeft;            // deslocamento horizontal
-      const vw = body.clientWidth;           // largura visível do corpo
-      const pxIntoDays = Math.max(0, sx - LABEL_W);
-      const firstIdx = Math.floor(pxIntoDays / DAY_W);
-
-      // largura útil para colunas de dia dentro do viewport
-      const daysViewportPx = vw - Math.max(0, LABEL_W - sx);
-      const cnt = Math.max(1, Math.ceil(daysViewportPx / DAY_W));
-      const lastIdx = firstIdx + cnt - 1;
-
-      setVisibleCols({
-        first: Math.max(0, firstIdx),
-        last: Math.max(firstIdx, lastIdx),
-      });
-    };
-
-    // rolagem do corpo controla o cabeçalho
-    body.addEventListener("scroll", syncAndMeasure, { passive: true });
-    window.addEventListener("resize", syncAndMeasure);
-
-    // inicializa
-    syncAndMeasure();
-
-    return () => {
-      body.removeEventListener("scroll", syncAndMeasure);
-      window.removeEventListener("resize", syncAndMeasure);
-    };
-  }, []);
 
   const categories = useMemo(
     () => [
       { name: "SIMPLES", from: 1, to: 5 },
       { name: "COMPLETO", from: 6, to: 10 },
-      { name: "DELUXE",   from: 11, to: 15 },
-      { name: "MASTER",   from: 16, to: 22 },
+      { name: "DELUXE", from: 11, to: 15 },
+      { name: "MASTER", from: 16, to: 22 },
     ],
     []
   );
@@ -114,18 +113,58 @@ export default function ReservationsPage() {
     []
   );
 
-  const reservations = useMemo(
-    () => [
-      { id: 101, roomId: 1, start: "2025-08-21", end: "2025-08-27", title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA" },
-      { id: 106, roomId: 2, start: "2025-08-25", end: "2025-08-28", title: "CASA E CAFE ASSEORIA PROFISSIONAL LTDA" },
-      { id: 102, roomId: 1, start: "2025-08-27", end: "2025-08-29", title: "PESSOA CHATA QUE NAO QUER PAGAR" },
-      { id: 103, roomId: 2, start: "2025-08-21", end: "2025-08-23", title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA" },
-      { id: 104, roomId: 4, start: "2025-08-24", end: "2025-08-28", title: "EMPRESA DEMO" },
-      { id: 105, roomId: 7, start: "2025-08-26", end: "2025-08-28", title: "EMPRESA DEMAO" },
-      { id: 107, roomId: 1, start: "2025-08-29", end: "2025-09-02", title: "EMPRESA DEMAO" },
-    ],
-    []
-  );
+  // Agora como useState (para refletir edições do editor)
+  const [reservations, setReservations] = useState([
+    {
+      id: 101,
+      roomId: 1,
+      start: "2025-08-21",
+      end: "2025-08-27",
+      title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA",
+    },
+    {
+      id: 106,
+      roomId: 2,
+      start: "2025-08-25",
+      end: "2025-08-28",
+      title: "CASA E CAFE ASSEORIA PROFISSIONAL LTDA",
+    },
+    {
+      id: 102,
+      roomId: 1,
+      start: "2025-08-27",
+      end: "2025-08-29",
+      title: "PESSOA CHATA QUE NAO QUER PAGAR",
+    },
+    {
+      id: 103,
+      roomId: 2,
+      start: "2025-08-21",
+      end: "2025-08-23",
+      title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA",
+    },
+    {
+      id: 104,
+      roomId: 4,
+      start: "2025-08-24",
+      end: "2025-08-28",
+      title: "EMPRESA DEMO",
+    },
+    {
+      id: 105,
+      roomId: 7,
+      start: "2025-08-26",
+      end: "2025-08-28",
+      title: "EMPRESA DEMAO",
+    },
+    {
+      id: 107,
+      roomId: 1,
+      start: "2025-08-29",
+      end: "2025-09-02",
+      title: "EMPRESA DEMAO",
+    },
+  ]);
 
   // janela fixa de 31 dias
   const isCurrentMonth =
@@ -141,15 +180,18 @@ export default function ReservationsPage() {
   );
   const dayKeys = useMemo(() => days.map(ymd), [days]);
 
-  // segmentos completos de mês (sobre a janela de 31 dias)
+  // segmentos de meses dentro da janela
   const monthSegments = useMemo(() => {
     const segs = [];
     let start = 0;
     for (let i = 1; i <= days.length; i++) {
-      const changed = i === days.length || days[i].getMonth() !== days[i - 1].getMonth();
+      const changed =
+        i === days.length || days[i].getMonth() !== days[i - 1].getMonth();
       if (changed) {
         const end = i - 1;
-        const label = days[start].toLocaleDateString("pt-BR", { month: "long" });
+        const label = days[start].toLocaleDateString("pt-BR", {
+          month: "long",
+        });
         segs.push({ start, end, label });
         start = i;
       }
@@ -157,18 +199,18 @@ export default function ReservationsPage() {
     return segs;
   }, [days]);
 
-  // bandas visíveis (clamp em first/last) — são estas que centralizamos e desenhamos!
+  // bandas visíveis (para centralizar a etiqueta no que está em tela)
   const visibleMonthBands = useMemo(() => {
     const bands = [];
     for (const seg of monthSegments) {
       const s = Math.max(seg.start, visibleCols.first);
-      const e = Math.min(seg.end,   visibleCols.last);
+      const e = Math.min(seg.end, visibleCols.last);
       if (s <= e) bands.push({ start: s, end: e, label: seg.label });
     }
     return bands;
   }, [monthSegments, visibleCols]);
 
-  // linhas (divisores) no virar do mês
+  // divisores no virar de mês
   const monthBreaks = useMemo(() => {
     const arr = [];
     for (let i = 1; i < days.length; i++) {
@@ -180,11 +222,272 @@ export default function ReservationsPage() {
     return arr;
   }, [days]);
 
-  const monthInputValue = `${viewDate.getFullYear()}-${pad(viewDate.getMonth() + 1)}`;
+  const monthInputValue = `${viewDate.getFullYear()}-${pad(
+    viewDate.getMonth() + 1
+  )}`;
   const prevDisabled =
     viewDate.getFullYear() < today.getFullYear() ||
     (viewDate.getFullYear() === today.getFullYear() &&
       viewDate.getMonth() <= today.getMonth());
+
+  const visualRows = useMemo(() => {
+    const rows = [];
+    categories.forEach((cat) => {
+      rows.push({ type: "category", name: cat.name });
+      rooms
+        .filter((r) => r.id >= cat.from && r.id <= cat.to)
+        .forEach((room) => rows.push({ type: "room", room }));
+    });
+    return rows;
+  }, [categories, rooms]);
+
+  const { roomTopMap, contentHeight } = useMemo(() => {
+    let y = 0;
+    const map = {};
+    visualRows.forEach((vr) => {
+      if (vr.type === "category") {
+        y += CAT_H;
+      } else {
+        map[vr.room.id] = y + (ROW_H - BAR_H) / 2;
+        y += ROW_H;
+      }
+    });
+    return { roomTopMap: map, contentHeight: y };
+  }, [visualRows]);
+
+  const totalGridWidth = LABEL_W + days.length * DAY_W;
+
+  const hoverDayIdx = hoverCell.dayIndex;
+  const hoverRoomId = hoverCell.roomId;
+
+  // Funções auxiliares para drag & drop
+  const getRoomIdFromY = (y) => {
+    let currentY = 0;
+    for (const row of visualRows) {
+      if (row.type === "category") {
+        currentY += CAT_H;
+      } else {
+        const rowBottom = currentY + ROW_H;
+        if (y >= currentY && y < rowBottom) {
+          return row.room.id;
+        }
+        currentY += ROW_H;
+      }
+    }
+    return null;
+  };
+
+  const getDayIndexFromX = (x) => {
+    const dayX = x - LABEL_W;
+    if (dayX < 0) return -1;
+    return Math.floor(dayX / DAY_W);
+  };
+
+  const handleReservationMouseDown = (e, reservation, resizeType = null) => {
+    if (e.button !== 0) return; // apenas botão esquerdo
+    e.preventDefault();
+    e.stopPropagation();
+
+    setDragState({
+      isDragging: !resizeType,
+      isResizing: !!resizeType,
+      resizeType,
+      reservationId: reservation.id,
+      initialMouseX: e.clientX,
+      initialRoomId: reservation.roomId,
+      initialStart: reservation.start,
+      initialEnd: reservation.end,
+      currentRoomId: reservation.roomId,
+      currentStart: reservation.start,
+      currentEnd: reservation.end,
+    });
+  };
+
+  const confirmActionHandler = () => {
+    if (!confirmAction.reservation) return;
+
+    setReservations(prev => 
+      prev.map(r => 
+        r.id === confirmAction.reservation.id
+          ? {
+              ...r,
+              roomId: confirmAction.newRoomId,
+              start: confirmAction.newStart,
+              end: confirmAction.newEnd,
+            }
+          : r
+      )
+    );
+
+    setConfirmAction({
+      open: false,
+      type: null,
+      reservation: null,
+      newRoomId: null,
+      newStart: null,
+      newEnd: null,
+    });
+  };
+
+  const cancelAction = () => {
+    setConfirmAction({
+      open: false,
+      type: null,
+      reservation: null,
+      newRoomId: null,
+      newStart: null,
+      newEnd: null,
+    });
+  };
+
+  useEffect(() => {
+    const body = scrollerRef.current;
+    const head = headXRef.current;
+    if (!body || !head) return;
+
+    const syncAndMeasure = () => {
+      if (head.scrollLeft !== body.scrollLeft)
+        head.scrollLeft = body.scrollLeft;
+
+      const sx = body.scrollLeft;
+      const vw = body.clientWidth;
+      const pxIntoDays = Math.max(0, sx - LABEL_W);
+      const firstIdx = Math.floor(pxIntoDays / DAY_W);
+      const daysViewportPx = vw - Math.max(0, LABEL_W - sx);
+      const cnt = Math.max(1, Math.ceil(daysViewportPx / DAY_W));
+      const lastIdx = firstIdx + cnt - 1;
+
+      setVisibleCols({
+        first: Math.max(0, firstIdx),
+        last: Math.max(firstIdx, lastIdx),
+      });
+    };
+
+    body.addEventListener("scroll", syncAndMeasure, { passive: true });
+    window.addEventListener("resize", syncAndMeasure);
+    syncAndMeasure();
+
+    return () => {
+      body.removeEventListener("scroll", syncAndMeasure);
+      window.removeEventListener("resize", syncAndMeasure);
+    };
+  }, []);
+
+  // Event listeners globais para drag & drop
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!dragState.isDragging && !dragState.isResizing) return;
+
+      const scrollerRect = scrollerRef.current?.getBoundingClientRect();
+      if (!scrollerRect) return;
+
+      const mouseX = e.clientX - scrollerRect.left + scrollerRef.current.scrollLeft;
+      const mouseY = e.clientY - scrollerRect.top + scrollerRef.current.scrollTop;
+
+      if (dragState.isDragging) {
+        // Arrastar reserva inteira
+        const newRoomId = getRoomIdFromY(mouseY);
+        const newDayIndex = getDayIndexFromX(mouseX);
+        
+        if (newRoomId && newDayIndex >= 0 && newDayIndex < days.length) {
+          const reservationDuration = diffDays(
+            new Date(dragState.initialStart),
+            new Date(dragState.initialEnd)
+          );
+          
+          const newStartDate = days[newDayIndex];
+          const newEndDate = addDays(newStartDate, reservationDuration);
+
+          setDragState(prev => ({
+            ...prev,
+            currentRoomId: newRoomId,
+            currentStart: ymd(newStartDate),
+            currentEnd: ymd(newEndDate),
+          }));
+        }
+      } else if (dragState.isResizing) {
+        // Redimensionar reserva
+        const newDayIndex = getDayIndexFromX(mouseX);
+        
+        if (newDayIndex >= 0 && newDayIndex < days.length) {
+          const newDate = days[newDayIndex];
+          
+          if (dragState.resizeType === 'start') {
+            // Redimensionar início
+            const endDate = new Date(dragState.initialEnd);
+            if (newDate < endDate) {
+              setDragState(prev => ({
+                ...prev,
+                currentStart: ymd(newDate),
+                currentEnd: dragState.initialEnd,
+              }));
+            }
+          } else if (dragState.resizeType === 'end') {
+            // Redimensionar fim
+            const startDate = new Date(dragState.initialStart);
+            if (newDate > startDate) {
+              setDragState(prev => ({
+                ...prev,
+                currentStart: dragState.initialStart,
+                currentEnd: ymd(newDate),
+              }));
+            }
+          }
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (dragState.isDragging || dragState.isResizing) {
+        const reservation = reservations.find(r => r.id === dragState.reservationId);
+        
+        if (reservation) {
+          const hasChanged = 
+            dragState.currentRoomId !== dragState.initialRoomId ||
+            dragState.currentStart !== dragState.initialStart ||
+            dragState.currentEnd !== dragState.initialEnd;
+
+          if (hasChanged) {
+            setConfirmAction({
+              open: true,
+              type: dragState.isDragging ? 'move' : 'resize',
+              reservation,
+              newRoomId: dragState.currentRoomId || dragState.initialRoomId,
+              newStart: dragState.currentStart || dragState.initialStart,
+              newEnd: dragState.currentEnd || dragState.initialEnd,
+            });
+          }
+        }
+      }
+
+      setDragState({
+        isDragging: false,
+        isResizing: false,
+        resizeType: null,
+        reservationId: null,
+        initialMouseX: 0,
+        initialRoomId: 0,
+        initialStart: null,
+        initialEnd: null,
+        currentRoomId: 0,
+        currentStart: null,
+        currentEnd: null,
+      });
+    };
+
+    if (dragState.isDragging || dragState.isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = dragState.isDragging ? 'grabbing' : 
+                                   dragState.resizeType === 'start' ? 'w-resize' : 'e-resize';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+    };
+  }, [dragState, days, reservations]);
 
   function resetSelection() {
     setRangeStart(null);
@@ -236,7 +539,9 @@ export default function ReservationsPage() {
 
   function handleCellClick(room, date) {
     if (ymd(date) < todayKey) return;
-    if (openExisting) return;
+    if (editorOpen) return; // evita conflito com editor aberto
+    if (dragState.isDragging || dragState.isResizing) return; // evita conflito com drag
+    
     if (!rangeStart || rangeStart.room.id !== room.id) {
       setRangeStart({ room, date });
       setRangeEnd(null);
@@ -251,13 +556,14 @@ export default function ReservationsPage() {
     setHoverDate(null);
     setOpenReview(true);
   }
+  
   function handleHover(room, date) {
-    if (rangeStart && !rangeEnd && rangeStart.room.id === room.id) {
+    if (rangeStart && !rangeEnd && rangeStart.room.id === room.id)
       setHoverDate(date);
-    }
   }
+  
   const inActiveRange = (rId, d) => {
-    if (openReview || openExisting) return false;
+    if (openReview || editorOpen) return false;
     if (!rangeStart || rangeStart.room.id !== rId) return false;
     const startKey = ymd(rangeStart.date);
     if (rangeEnd) {
@@ -297,7 +603,7 @@ export default function ReservationsPage() {
     const visibleEnd = dayKeys[dayKeys.length - 1];
     if (!visibleStart || !visibleEnd) return null;
     const clampedStart = startKey < visibleStart ? visibleStart : startKey;
-    const clampedEnd   = endKey   > visibleEnd   ? visibleEnd   : endKey;
+    const clampedEnd = endKey > visibleEnd ? visibleEnd : endKey;
     const si = dayKeys.indexOf(clampedStart);
     const ei = dayKeys.indexOf(clampedEnd);
     if (si === -1 || ei === -1 || si > ei) return null;
@@ -305,56 +611,13 @@ export default function ReservationsPage() {
       si,
       ei,
       startsBeforeVisible: startKey < visibleStart,
-      endsAfterVisible:   endKey   > visibleEnd,
+      endsAfterVisible: endKey > visibleEnd,
     };
   }
 
-  const visualRows = useMemo(() => {
-    const rows = [];
-    categories.forEach((cat) => {
-      rows.push({ type: "category", name: cat.name });
-      rooms
-        .filter((r) => r.id >= cat.from && r.id <= cat.to)
-        .forEach((room) => rows.push({ type: "room", room }));
-    });
-    return rows;
-  }, [categories, rooms]);
-
-  const { roomTopMap, contentHeight } = useMemo(() => {
-    let y = 0;
-    const map = {};
-    visualRows.forEach((vr) => {
-      if (vr.type === "category") {
-        y += CAT_H;
-      } else {
-        map[vr.room.id] = y + (ROW_H - BAR_H) / 2;
-        y += ROW_H;
-      }
-    });
-    return { roomTopMap: map, contentHeight: y };
-  }, [visualRows]);
-
-  const totalGridWidth = LABEL_W + days.length * DAY_W;
-
-  const existingInfo = useMemo(() => {
-    if (!openExisting) return null;
-    const start = new Date(openExisting.start);
-    const end = new Date(openExisting.end);
-    const nights = diffDays(start, addDays(end, 1));
-    return {
-      nights,
-      title: openExisting.title,
-      nightly,
-      total: nights * nightly,
-      range: `${start.toLocaleDateString("pt-BR")} - ${end.toLocaleDateString(
-        "pt-BR"
-      )}`,
-    };
-  }, [openExisting]);
-
   return (
     <div className="form-page">
-      {/* DASHBOARD (gap enxuto) */}
+      {/* DASHBOARD */}
       <div style={{ marginBottom: BLOCK_GAP }}>
         <ModernDashboard
           reservations={reservations}
@@ -378,20 +641,18 @@ export default function ReservationsPage() {
           marginBottom: BLOCK_GAP,
         }}
       >
-        <h2 className="header__title" style={{ margin: 0 }}>
-          {`Calendário de Reservas ${viewDate.getFullYear()}`}
-        </h2>
+        <h2
+          className="header__title"
+          style={{ margin: 0 }}
+        >{`Calendário de Reservas ${viewDate.getFullYear()}`}</h2>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <button
             className="btn btn--primary"
-            onClick={() => {
-              resetSelection();
-              setOpenReview(false);
-              setOpenExisting(null);
-            }}
+            onClick={() => setNewReservationOpen(true)}
           >
             Adicionar Reserva
           </button>
+
           <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
             <button
               className="btn"
@@ -414,7 +675,7 @@ export default function ReservationsPage() {
         </div>
       </div>
 
-      {/* CALENDÁRIO (cabeçalho sticky fora do scroller + corpo rolável) */}
+      {/* CALENDÁRIO */}
       <div
         className="form-card"
         style={{
@@ -425,19 +686,20 @@ export default function ReservationsPage() {
           overflow: "hidden",
         }}
       >
-        {/* ===== CABEÇALHO STICKY: FAIXA DOS MESES + LINHA DAS DATAS ===== */}
+        {/* Cabeçalho fixo (mês + datas) */}
         <div
           ref={headXRef}
           style={{
             position: "sticky",
-            top: 0,               // cola logo abaixo do título (que também é sticky)
+            top: 0,
             zIndex: 90,
             overflowX: "hidden",
             borderBottom: "2px solid #e2e6ea",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            background: "#f8faf9",
           }}
         >
-          {/* FAIXA DOS MESES */}
+          {/* Faixa dos meses */}
           <div
             style={{
               position: "relative",
@@ -449,12 +711,9 @@ export default function ReservationsPage() {
               minWidth: totalGridWidth,
             }}
           >
-            {/* coluna “Quartos” vazia para alinhamento */}
             <div style={{ borderRight: "1px solid #e2e6ea" }} />
-
-            {/* etiquetas dos meses CENTRALIZADAS PELO TRECHO VISÍVEL */}
             {visibleMonthBands.map((seg) => {
-              const left  = LABEL_W + seg.start * DAY_W;
+              const left = LABEL_W + seg.start * DAY_W;
               const width = (seg.end - seg.start + 1) * DAY_W;
               return (
                 <div
@@ -491,7 +750,7 @@ export default function ReservationsPage() {
             })}
           </div>
 
-          {/* LINHA DAS DATAS */}
+          {/* Linha das datas */}
           <div
             style={{
               display: "grid",
@@ -515,10 +774,10 @@ export default function ReservationsPage() {
             >
               Quartos
             </div>
-
-            {days.map((d) => {
+            {days.map((d, i) => {
               const isSel = ymd(d) === ymd(selectedDay);
               const isToday = ymd(d) === ymd(today);
+              const isHoverDay = hoverDayIdx === i;
               return (
                 <div
                   key={ymd(d)}
@@ -532,8 +791,13 @@ export default function ReservationsPage() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    background: isSel ? "#e6f2ef" : "transparent",
+                    background: isSel
+                      ? "#e6f2ef"
+                      : isHoverDay
+                      ? "#f1f8f6"
+                      : "transparent",
                     borderRadius: 6,
+                    transition: "background .12s ease",
                   }}
                 >
                   <div
@@ -563,9 +827,10 @@ export default function ReservationsPage() {
           </div>
         </div>
 
-        {/* ===== CORPO ROLÁVEL (vertical + horizontal) ===== */}
+        {/* Corpo rolável */}
         <div
           ref={scrollerRef}
+          onMouseLeave={() => setHoverCell({ roomId: null, dayIndex: null })}
           style={{
             overflow: "auto",
             maxHeight: VIEW_H,
@@ -575,7 +840,7 @@ export default function ReservationsPage() {
           }}
         >
           <div style={{ position: "relative", minWidth: totalGridWidth }}>
-            {/* categorias + linhas de quartos */}
+            {/* categorias + linhas */}
             {(() => {
               const rows = [];
               let rowIdx = 0;
@@ -619,7 +884,8 @@ export default function ReservationsPage() {
                 rooms
                   .filter((r) => r.id >= cat.from && r.id <= cat.to)
                   .forEach((room) => {
-                    const roomBg = rowIdx++ % 2 === 0 ? "#fafdfb" : "#ffffff";
+                    const isHoverRoom = hoverRoomId === room.id;
+                    const rowBg = rowIdx++ % 2 === 0 ? "#fafdfb" : "#ffffff";
                     rows.push(
                       <div
                         key={`room-${room.id}`}
@@ -628,7 +894,7 @@ export default function ReservationsPage() {
                           gridTemplateColumns: `${LABEL_W}px repeat(${days.length}, ${DAY_W}px)`,
                           position: "relative",
                           height: ROW_H,
-                          backgroundColor: roomBg,
+                          backgroundColor: rowBg,
                         }}
                       >
                         <div
@@ -636,7 +902,7 @@ export default function ReservationsPage() {
                             position: "sticky",
                             left: 0,
                             zIndex: 15,
-                            background: roomBg,
+                            background: isHoverRoom ? "#edf7f4" : rowBg,
                             color: "#2d3748",
                             textAlign: "center",
                             padding: "16px 8px",
@@ -644,19 +910,27 @@ export default function ReservationsPage() {
                             borderBottom: "1px solid #e2e6ea",
                             borderRight: "1px solid #e2e6ea",
                             fontSize: 14,
+                            transition: "background .12s ease",
                           }}
                         >
                           {room.name}
                         </div>
-                        {days.map((d) => {
+                        {days.map((d, i) => {
                           const active = inActiveRange(room.id, d);
                           const isPast = ymd(d) < todayKey;
+                          const isHover =
+                            hoverRoomId === room.id && hoverDayIdx === i;
                           return (
                             <button
                               key={`${room.id}-${ymd(d)}`}
                               type="button"
                               onClick={() => handleCellClick(room, d)}
-                              onMouseEnter={() => handleHover(room, d)}
+                              onMouseEnter={() =>
+                                setHoverCell({ roomId: room.id, dayIndex: i })
+                              }
+                              onMouseLeave={() =>
+                                setHoverCell({ roomId: null, dayIndex: null })
+                              }
                               style={{
                                 height: "100%",
                                 border: "1px solid #eef1f3",
@@ -664,15 +938,22 @@ export default function ReservationsPage() {
                                   ? "#e3e8f0"
                                   : isPast
                                   ? "#f8f9fa"
+                                  : isHover
+                                  ? "#f1f8f6"
                                   : "#ffffff",
                                 cursor: isPast ? "not-allowed" : "pointer",
                                 position: "relative",
                                 opacity: isPast ? 0.6 : 1,
+                                transition: "background .12s ease",
                               }}
                               title={
                                 isPast
-                                  ? `Data passada - ${d.toLocaleDateString("pt-BR")}`
-                                  : `Quarto ${room.name} • ${d.toLocaleDateString("pt-BR")}`
+                                  ? `Data passada - ${d.toLocaleDateString(
+                                      "pt-BR"
+                                    )}`
+                                  : `Quarto ${
+                                      room.name
+                                    } • ${d.toLocaleDateString("pt-BR")}`
                               }
                               disabled={isPast}
                             />
@@ -704,7 +985,20 @@ export default function ReservationsPage() {
 
             {/* barras de reservas */}
             {reservations.map((r) => {
-              const clamp = clampRangeToVisible(r.start, r.end);
+              const isDragging = dragState.reservationId === r.id;
+              
+              // Se está sendo arrastada, use as coordenadas temporárias
+              let displayReservation = r;
+              if (isDragging) {
+                displayReservation = {
+                  ...r,
+                  roomId: dragState.currentRoomId || r.roomId,
+                  start: dragState.currentStart || r.start,
+                  end: dragState.currentEnd || r.end,
+                };
+              }
+
+              const clamp = clampRangeToVisible(displayReservation.start, displayReservation.end);
               if (!clamp) return null;
 
               const leftPx =
@@ -716,10 +1010,10 @@ export default function ReservationsPage() {
                 (clamp.ei + 1) * DAY_W -
                 (clamp.endsAfterVisible ? 0 : DAY_W / 2 + BAR_GAP / 2);
               const widthPx = Math.max(12, rightPx - leftPx);
-              const top = roomTopMap[r.roomId] ?? 0;
+              const top = roomTopMap[displayReservation.roomId] ?? 0;
 
-              const start = new Date(r.start);
-              const end = new Date(r.end);
+              const start = new Date(displayReservation.start);
+              const end = new Date(displayReservation.end);
               const nights = diffDays(start, addDays(end, 1));
               const hovered = hoverResv === r.id;
 
@@ -730,34 +1024,64 @@ export default function ReservationsPage() {
               else if (clamp.endsAfterVisible) borderRadius = "8px 0 0 8px";
 
               return (
-                <button
+                <div
                   key={r.id}
-                  type="button"
-                  onClick={() => setOpenExisting({ ...r })}
-                  onMouseEnter={() => setHoverResv(r.id)}
-                  onMouseLeave={() => setHoverResv(null)}
                   style={{
                     position: "absolute",
                     top,
                     height: BAR_H,
                     left: leftPx,
                     width: widthPx,
-                    background: hovered ? "#7ca4c4" : "#8fb4d4",
+                    background: isDragging 
+                      ? "rgba(124, 164, 196, 0.8)" 
+                      : hovered 
+                      ? "#7ca4c4" 
+                      : "#8fb4d4",
                     borderRadius,
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    boxShadow: isDragging 
+                      ? "0 4px 12px rgba(0,0,0,0.3)" 
+                      : "0 2px 4px rgba(0,0,0,0.1)",
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
                     padding: "0 10px",
-                    zIndex: 10,
-                    transform: hovered ? "translateY(-1px) scale(1.02)" : "none",
-                    cursor: "pointer",
-                    border: 0,
+                    zIndex: isDragging ? 20 : 10,
+                    transform: hovered && !isDragging
+                      ? "translateY(-1px) scale(1.02)"
+                      : "none",
+                    cursor: isDragging ? "grabbing" : "grab",
+                    border: isDragging ? "2px solid #4a90b8" : "none",
                     color: "#1a365d",
                     fontWeight: 500,
+                    userSelect: "none",
+                    opacity: isDragging ? 0.9 : 1,
                   }}
+                  onMouseDown={(e) => handleReservationMouseDown(e, r)}
+                  onMouseEnter={() => setHoverResv(r.id)}
+                  onMouseLeave={() => setHoverResv(null)}
                   title={r.title}
                 >
+                  {/* Handle de redimensionamento esquerdo */}
+                  {!clamp.startsBeforeVisible && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: RESIZE_HANDLE_WIDTH,
+                        cursor: "w-resize",
+                        background: "transparent",
+                        zIndex: 1,
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        handleReservationMouseDown(e, r, 'start');
+                      }}
+                      title="Redimensionar início"
+                    />
+                  )}
+
                   <span
                     style={{
                       background: "#ffffff",
@@ -768,6 +1092,7 @@ export default function ReservationsPage() {
                       color: "#2d3748",
                       minWidth: 20,
                       textAlign: "center",
+                      pointerEvents: "none",
                     }}
                   >
                     {nights}
@@ -780,11 +1105,33 @@ export default function ReservationsPage() {
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       flex: 1,
+                      pointerEvents: "none",
                     }}
                   >
                     {r.title}
                   </div>
-                </button>
+
+                  {/* Handle de redimensionamento direito */}
+                  {!clamp.endsAfterVisible && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: RESIZE_HANDLE_WIDTH,
+                        cursor: "e-resize",
+                        background: "transparent",
+                        zIndex: 1,
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                        handleReservationMouseDown(e, r, 'end');
+                      }}
+                      title="Redimensionar fim"
+                    />
+                  )}
+                </div>
               );
             })}
           </div>
@@ -875,61 +1222,119 @@ export default function ReservationsPage() {
         )}
       </Modal>
 
-      {/* Modal – reserva existente */}
-      <Modal open={!!openExisting} onClose={() => setOpenExisting(null)}>
-        {openExisting && (
+      {/* Modal de confirmação de ação */}
+      <Modal
+        open={confirmAction.open}
+        onClose={cancelAction}
+      >
+        <div
+          className="form-card"
+          style={{ boxShadow: "none", padding: 0, minWidth: 480 }}
+        >
           <div
-            className="form-card"
-            style={{ boxShadow: "none", padding: 0, minWidth: 520 }}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-              }}
-            >
-              <h3 className="form-card__title" style={{ margin: 0 }}>
-                {openExisting.title}
-              </h3>
-            </div>
-            <div
-              className="cd-split"
-              style={{ gridTemplateColumns: "1fr 1fr", marginTop: 0 }}
-            >
-              <div>
-                <h4>Dados</h4>
-                <div className="kv">
-                  <strong>Período:</strong>
-                  <span>
-                    {new Date(openExisting.start).toLocaleDateString("pt-BR")} -{" "}
-                    {new Date(openExisting.end).toLocaleDateString("pt-BR")}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <h4>Valores</h4>
-                <div className="kv">
-                  <strong>Valor Diária:</strong>
-                  <span>R$ 80,00</span>
-                </div>
-              </div>
-            </div>
-            <div className="form-actions" style={{ marginTop: 16 }}>
-              <button className="btn" onClick={() => setOpenExisting(null)}>
-                Fechar
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={() => setOpenExisting(null)}
-              >
-                Editar Reserva
-              </button>
-            </div>
+            <h3 className="form-card__title" style={{ margin: 0 }}>
+              Confirmar {confirmAction.type === 'move' ? 'Mudança' : 'Redimensionamento'}
+            </h3>
           </div>
-        )}
+          
+          {confirmAction.reservation && (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ margin: "0 0 12px 0", color: "#4a5568" }}>
+                {confirmAction.type === 'move' 
+                  ? 'Deseja mover esta reserva para o novo quarto e data?'
+                  : 'Deseja alterar as datas desta reserva?'
+                }
+              </p>
+              
+              <div style={{ 
+                background: "#f7fafc", 
+                border: "1px solid #e2e8f0", 
+                borderRadius: 8, 
+                padding: 16,
+                marginBottom: 16
+              }}>
+                <h4 style={{ margin: "0 0 8px 0", fontSize: 14, color: "#2d3748" }}>
+                  {confirmAction.reservation.title}
+                </h4>
+                
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <strong style={{ fontSize: 13, color: "#718096" }}>Dados Atuais:</strong>
+                    <div style={{ fontSize: 14, marginTop: 4 }}>
+                      <div>Quarto: {rooms.find(r => r.id === confirmAction.reservation.roomId)?.name}</div>
+                      <div>Entrada: {new Date(confirmAction.reservation.start).toLocaleDateString("pt-BR")}</div>
+                      <div>Saída: {new Date(confirmAction.reservation.end).toLocaleDateString("pt-BR")}</div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <strong style={{ fontSize: 13, color: "#718096" }}>Novos Dados:</strong>
+                    <div style={{ fontSize: 14, marginTop: 4, color: "#2b6cb0" }}>
+                      <div>Quarto: {rooms.find(r => r.id === confirmAction.newRoomId)?.name}</div>
+                      <div>Entrada: {new Date(confirmAction.newStart).toLocaleDateString("pt-BR")}</div>
+                      <div>Saída: {new Date(confirmAction.newEnd).toLocaleDateString("pt-BR")}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="form-actions" style={{ marginTop: 16 }}>
+            <button
+              className="btn"
+              onClick={cancelAction}
+            >
+              Cancelar
+            </button>
+            <button
+              className="btn btn--primary"
+              onClick={confirmActionHandler}
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
       </Modal>
+
+      <NewReservationModal
+        open={newReservationOpen}
+        onClose={() => setNewReservationOpen(false)}
+        onSave={(newRes) => {
+          setReservations((prev) => [...prev, newRes]);
+        }}
+      />
+
+      {/* EDITOR SEPARADO (modal) */}
+      <ReservationEditorModal
+        open={editorOpen}
+        onClose={() => setEditorOpen(false)}
+        reservation={editorData}
+        rooms={rooms}
+        onSave={(updated) => {
+          // Atualiza reserva no calendário (apenas campos relevantes p/ a grade)
+          setReservations((prev) =>
+            prev.map((r) =>
+              r.id === updated.id
+                ? {
+                    ...r,
+                    roomId: updated.roomId,
+                    start: updated.checkin,
+                    end: updated.checkout,
+                  }
+                : r
+            )
+          );
+          setEditorOpen(false);
+        }}
+      />
     </div>
   );
 }

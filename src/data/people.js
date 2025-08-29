@@ -21,19 +21,20 @@ export const PEOPLE = [
       bairro: "Ouro Preto",
       pais: "Brasil",
       estado: "Amazonas",
-      municipio: "Apuí"
+      municipio: "Apuí",
     },
     empresa: {
       razao: "SAM HELSON LTDA",
       cnpj: "52.006.953/0001-60",
       telefone: "(98) 9 8787-9090",
-      email: "email@email.com"
+      email: "email@email.com",
     },
     situacao: "Cadastrado",
     cliente_novo: true,
     hospedado: false,
     ultimaHospedagemInicio: "2025-02-23",
     ultimaHospedagemFim: "2025-02-26",
+
     historicoHospedagem: [
       {
         quarto: "Quarto 01",
@@ -46,29 +47,69 @@ export const PEOPLE = [
             titulo: "1 Diaria 27/03/2025 - 28/03/2025",
             total: 116,
             itens: [
-              { nome: "Hospedagem Individual", data: "28/03/2025 15:07", pagamento: "PIX", valor: 110 },
-              { nome: "Consumo", data: "28/03/2025 15:08", pagamento: "PIX", valor: 6 }
-            ]
+              {
+                nome: "Hospedagem Individual",
+                data: "28/03/2025 15:07",
+                pagamento: "PIX",
+                valor: 110,
+              },
+              {
+                nome: "Consumo",
+                data: "28/03/2025 15:08",
+                pagamento: "PIX",
+                valor: 6,
+              },
+            ],
           },
           {
             titulo: "2 Diaria 28/03/2025 - 29/03/2025",
             total: 110,
             itens: [
-              { nome: "Hospedagem Individual", data: "28/03/2025 15:07", pagamento: "CARTAO DE CREDITO", valor: 110 }
-            ]
-          }
-        ]
-      }
-    ]
+              {
+                nome: "Hospedagem Individual",
+                data: "28/03/2025 15:07",
+                pagamento: "CARTAO DE CREDITO",
+                valor: 110,
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   {
     id: 2,
     nome: "Vicente Santos",
     cpf: "987.654.321-00",
+    rg: "15.234.987-2",
+    sexo: 1,
+    data_nascimento: "1996-05-10",
     telefone: "(98) 9 8787-9090",
+    email: "vicente@email.com",
     avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    nacionalidade: { municipio: "Viana", estado: "Maranhão", pais: "Brasil" },
+    profissao: "Analista",
+    estado_civil: "Solteiro",
+    endereco: {
+      logradouro: "Av. Central",
+      cep: "01000-000",
+      numero: "200",
+      complemento: "",
+      bairro: "Centro",
+      pais: "Brasil",
+      estado: "Maranhão",
+      municipio: "Viana",
+    },
+    empresa: {
+      razao: "Empresa Exemplo SA",
+      cnpj: "12.345.678/0001-99",
+      telefone: "(98) 9 8787-9090",
+      email: "contato@empresa.com",
+    },
+    situacao: "Cadastrado",
+    cliente_novo: false,
+    hospedado: false,
     ultimaHospedagemInicio: "2025-02-23",
     ultimaHospedagemFim: "2025-02-26",
-    historicoHospedagem: []
-  }
+  },
 ];
