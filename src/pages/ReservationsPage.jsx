@@ -69,6 +69,8 @@ export default function ReservationsPage() {
     resizeType: null, // 'start' ou 'end'
     reservationId: null,
     initialMouseX: 0,
+    initialMouseY: 0,
+    startTime: 0,
     initialRoomId: 0,
     initialStart: null,
     initialEnd: null,
@@ -288,12 +290,19 @@ export default function ReservationsPage() {
     e.preventDefault();
     e.stopPropagation();
 
+    // Armazena posição inicial para detectar se é drag ou clique
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startTime = Date.now();
+
     setDragState({
-      isDragging: !resizeType,
-      isResizing: !!resizeType,
+      isDragging: false, // só ativa depois de mover
+      isResizing: false,
       resizeType,
       reservationId: reservation.id,
-      initialMouseX: e.clientX,
+      initialMouseX: startX,
+      initialMouseY: startY,
+      startTime,
       initialRoomId: reservation.roomId,
       initialStart: reservation.start,
       initialEnd: reservation.end,
@@ -376,7 +385,7 @@ export default function ReservationsPage() {
   // Event listeners globais para drag & drop
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!dragState.isDragging && !dragState.isResizing) return;
+      if (dragState.reservationId === null) return;
 
       const scrollerRect = scrollerRef.current?.getBoundingClientRect();
       if (!scrollerRect) return;
@@ -384,7 +393,21 @@ export default function ReservationsPage() {
       const mouseX = e.clientX - scrollerRect.left + scrollerRef.current.scrollLeft;
       const mouseY = e.clientY - scrollerRect.top + scrollerRef.current.scrollTop;
 
-      if (dragState.isDragging) {
+      // Detecta se é um drag (movimento suficiente)
+      const deltaX = Math.abs(e.clientX - dragState.initialMouseX);
+      const deltaY = Math.abs(e.clientY - dragState.initialMouseY);
+      const isDragMovement = deltaX > 5 || deltaY > 5;
+
+      if (isDragMovement && !dragState.isDragging && !dragState.isResizing) {
+        // Inicia o drag
+        setDragState(prev => ({
+          ...prev,
+          isDragging: !prev.resizeType,
+          isResizing: !!prev.resizeType,
+        }));
+      }
+
+      if (dragState.isDragging || (isDragMovement && !dragState.resizeType)) {
         // Arrastar reserva inteira
         const newRoomId = getRoomIdFromY(mouseY);
         const newDayIndex = getDayIndexFromX(mouseX);
@@ -400,12 +423,13 @@ export default function ReservationsPage() {
 
           setDragState(prev => ({
             ...prev,
+            isDragging: true,
             currentRoomId: newRoomId,
             currentStart: ymd(newStartDate),
             currentEnd: ymd(newEndDate),
           }));
         }
-      } else if (dragState.isResizing) {
+      } else if (dragState.isResizing || (isDragMovement && dragState.resizeType)) {
         // Redimensionar reserva
         const newDayIndex = getDayIndexFromX(mouseX);
         
@@ -418,6 +442,7 @@ export default function ReservationsPage() {
             if (newDate < endDate) {
               setDragState(prev => ({
                 ...prev,
+                isResizing: true,
                 currentStart: ymd(newDate),
                 currentEnd: dragState.initialEnd,
               }));
@@ -428,6 +453,7 @@ export default function ReservationsPage() {
             if (newDate > startDate) {
               setDragState(prev => ({
                 ...prev,
+                isResizing: true,
                 currentStart: dragState.initialStart,
                 currentEnd: ymd(newDate),
               }));
@@ -437,8 +463,31 @@ export default function ReservationsPage() {
       }
     };
 
-    const handleMouseUp = () => {
-      if (dragState.isDragging || dragState.isResizing) {
+    const handleMouseUp = (e) => {
+      if (dragState.reservationId === null) return;
+
+      const deltaX = Math.abs(e.clientX - dragState.initialMouseX);
+      const deltaY = Math.abs(e.clientY - dragState.initialMouseY);
+      const timeDelta = Date.now() - dragState.startTime;
+      const isClick = deltaX < 5 && deltaY < 5 && timeDelta < 300;
+
+      if (isClick && !dragState.resizeType) {
+        // É um clique simples - abre o editor
+        const reservation = reservations.find(r => r.id === dragState.reservationId);
+        if (reservation) {
+          setEditorData({
+            id: reservation.id,
+            roomId: reservation.roomId,
+            checkin: reservation.start,
+            checkout: reservation.end,
+            people: 2,
+            ratePerPerson: 80,
+            payments: [],
+          });
+          setEditorOpen(true);
+        }
+      } else if (dragState.isDragging || dragState.isResizing) {
+        // É um drag - mostra modal de confirmação
         const reservation = reservations.find(r => r.id === dragState.reservationId);
         
         if (reservation) {
@@ -460,12 +509,15 @@ export default function ReservationsPage() {
         }
       }
 
+      // Reset do estado
       setDragState({
         isDragging: false,
         isResizing: false,
         resizeType: null,
         reservationId: null,
         initialMouseX: 0,
+        initialMouseY: 0,
+        startTime: 0,
         initialRoomId: 0,
         initialStart: null,
         initialEnd: null,
@@ -475,11 +527,14 @@ export default function ReservationsPage() {
       });
     };
 
-    if (dragState.isDragging || dragState.isResizing) {
+    if (dragState.reservationId !== null) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = dragState.isDragging ? 'grabbing' : 
-                                   dragState.resizeType === 'start' ? 'w-resize' : 'e-resize';
+      
+      if (dragState.isDragging || dragState.isResizing) {
+        document.body.style.cursor = dragState.isDragging ? 'grabbing' : 
+                                     dragState.resizeType === 'start' ? 'w-resize' : 'e-resize';
+      }
     }
 
     return () => {
