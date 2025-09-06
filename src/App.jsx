@@ -6,6 +6,7 @@ import FinancePage from "./pages/FinancePage.jsx";
 import PricesPage from './pages/PricesPage.jsx';
 import ItemsPage from './pages/ItemsPage.jsx';
 import ReservationsPage from './pages/ReservationsPage.jsx';
+import OvernightsPage from './pages/OvernightsPage.jsx';
 
 export default function App() {
   const [page, setPage] = useState("dashboard");
@@ -63,6 +64,7 @@ export default function App() {
   {page === 'precos' && <PricesPage />}
   {page === 'itens' && <ItemsPage />}
   {page === 'reservas' && <ReservationsPage />}
+  {page === 'pernoites' && <OvernightsPage />} {/* Nova página adicionada */}
 
   
 </section>

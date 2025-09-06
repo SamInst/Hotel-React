@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Modal } from "./Modal.jsx";
 import { ROOMS } from "../data/rooms.js";
 
@@ -24,7 +24,7 @@ const ALL_GUESTS = [
   },
 ];
 
-export default function NewReservationModal({ open, onClose, onSave }) {
+export default function NewReservationModal({ open, onClose, onSave, prefilledData }) {
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
@@ -50,6 +50,31 @@ export default function NewReservationModal({ open, onClose, onSave }) {
     method: "DINHEIRO",
     amount: "",
   });
+
+  // Effect para pré-preencher dados quando o modal abre com dados pré-selecionados
+  useEffect(() => {
+    if (open && prefilledData) {
+      if (prefilledData.roomId) {
+        setRoomId(prefilledData.roomId);
+      }
+      if (prefilledData.checkin) {
+        setCheckin(prefilledData.checkin);
+      }
+      if (prefilledData.checkout) {
+        setCheckout(prefilledData.checkout);
+      }
+    } else if (open && !prefilledData) {
+      // Reset para valores padrão quando abre sem dados pré-preenchidos
+      setRoomId("");
+      setCheckin(today);
+      setCheckout(tomorrow);
+      setArrival("13:00");
+      setDeparture("11:00");
+      setGuests([]);
+      setPayments([]);
+      setActiveTab("reserva");
+    }
+  }, [open, prefilledData]);
 
   // Hóspedes
   function handleAddGuest(guest) {
@@ -98,19 +123,37 @@ export default function NewReservationModal({ open, onClose, onSave }) {
 
   // Finalizar criação
   function handleSave() {
+    if (!roomId) {
+      alert("Selecione um quarto para a reserva.");
+      return;
+    }
+
     const newReservation = {
       id: Date.now(),
-      roomId,
-      checkin: checkin.toISOString().split("T")[0],
-      checkout: checkout.toISOString().split("T")[0],
+      roomId: Number(roomId),
+      start: checkin instanceof Date ? checkin.toISOString().split("T")[0] : checkin,
+      end: checkout instanceof Date ? checkout.toISOString().split("T")[0] : checkout,
+      title: guests.length > 0 ? guests.find(g => g.representative)?.name || guests[0]?.name || "Reserva" : "Reserva",
       arrival,
       departure,
       guests,
       payments,
-      people: guests.length,
+      people: guests.length || 1,
       ratePerPerson: 80,
     };
+    
     onSave(newReservation);
+    
+    // Reset todos os campos
+    setRoomId("");
+    setCheckin(today);
+    setCheckout(tomorrow);
+    setArrival("13:00");
+    setDeparture("11:00");
+    setGuests([]);
+    setPayments([]);
+    setActiveTab("reserva");
+    
     onClose();
   }
 
@@ -136,6 +179,11 @@ export default function NewReservationModal({ open, onClose, onSave }) {
         <div style={{ borderBottom: "2px solid #eee", paddingBottom: 8 }}>
           <h3 className="form-card__title" style={{ marginBottom: 12 }}>
             Nova Reserva
+            {prefilledData && (
+              <span style={{ fontSize: 14, color: "#666", fontWeight: 400, marginLeft: 8 }}>
+                (Pré-preenchida)
+              </span>
+            )}
           </h3>
           <div style={{ display: "flex", borderBottom: "2px solid #e0e0e0" }}>
             {[
@@ -179,8 +227,7 @@ export default function NewReservationModal({ open, onClose, onSave }) {
                   value={roomId}
                   onChange={(e) => setRoomId(e.target.value)}
                 >
-                  <option value="">Selecione um quarto</option>{" "}
-                  {/* 🔹 opção inicial */}
+                  <option value="">Selecione um quarto</option>
                   {ROOMS.map((r, idx) => (
                     <option key={idx} value={idx + 1}>
                       {r.numero} ({r.tipo})
@@ -206,7 +253,7 @@ export default function NewReservationModal({ open, onClose, onSave }) {
                     <input
                       type="date"
                       min={today.toISOString().split("T")[0]}
-                      value={checkin.toISOString().split("T")[0]}
+                      value={checkin instanceof Date ? checkin.toISOString().split("T")[0] : checkin}
                       onChange={(e) => setCheckin(new Date(e.target.value))}
                       className="control"
                     />
@@ -218,8 +265,8 @@ export default function NewReservationModal({ open, onClose, onSave }) {
                     <strong>Checkout:</strong>
                     <input
                       type="date"
-                      min={checkin.toISOString().split("T")[0]}
-                      value={checkout.toISOString().split("T")[0]}
+                      min={checkin instanceof Date ? checkin.toISOString().split("T")[0] : checkin}
+                      value={checkout instanceof Date ? checkout.toISOString().split("T")[0] : checkout}
                       onChange={(e) => setCheckout(new Date(e.target.value))}
                       className="control"
                     />
@@ -237,6 +284,12 @@ export default function NewReservationModal({ open, onClose, onSave }) {
                       onChange={(e) => setArrival(e.target.value)}
                       className="control"
                     />
+                  </div>
+                  <div
+                    className="kv"
+                    style={{ display: "flex", flexDirection: "column" }}
+                  >
+                    <strong>Saída prevista:</strong>
                     <input
                       type="time"
                       value={departure}

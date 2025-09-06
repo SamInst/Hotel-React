@@ -1,0 +1,417 @@
+.overnights-page {
+  padding: 24px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.overnights-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.overnights-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.add-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-button:hover {
+  background-color: #2563eb;
+}
+
+.add-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.overnights-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.search-container {
+  flex: 1;
+  max-width: 400px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.date-filters {
+  display: flex;
+  gap: 16px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+  transition: border-color 0.2s;
+}
+
+.filter-group:hover {
+  border-color: #9ca3af;
+}
+
+.filter-icon {
+  font-size: 14px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.filter-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab.green {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.filter-tab.green.active {
+  background-color: #16a34a;
+  color: white;
+}
+
+.filter-tab.blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.filter-tab.blue.active {
+  background-color: #2563eb;
+  color: white;
+}
+
+.filter-tab.orange {
+  background-color: #fed7aa;
+  color: #c2410c;
+}
+
+.filter-tab.orange.active {
+  background-color: #ea580c;
+  color: white;
+}
+
+.filter-tab.gray {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.filter-tab.gray.active {
+  background-color: #6b7280;
+  color: white;
+}
+
+.filter-count {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: inherit;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.filter-tab.active .filter-count {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.overnights-content {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.tab-button {
+  padding: 16px 24px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button.active {
+  color: #1f2937;
+  background-color: white;
+  border-bottom-color: #3b82f6;
+}
+
+.tab-button:hover:not(.active) {
+  color: #374151;
+  background-color: #f3f4f6;
+}
+
+.overnights-list {
+  padding: 0;
+}
+
+.empty-state {
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.overnight-card {
+  display: flex;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.overnight-card:hover {
+  background-color: #f9fafb;
+}
+
+.overnight-card:last-child {
+  border-bottom: none;
+}
+
+.overnight-id {
+  font-size: 18px;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 40px;
+  margin-right: 20px;
+}
+
+.overnight-info {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.guest-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.guest-details {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 4px 0;
+}
+
+.dates {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.overnight-dates {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 20px;
+  min-width: 100px;
+}
+
+.date-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.date-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.date-value {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.overnight-actions {
+  min-width: 120px;
+  text-align: right;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-button.checkout {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.action-button.checkout:hover {
+  background-color: #2563eb;
+}
+
+.action-button.payment {
+  background-color: #f59e0b;
+  color: white;
+}
+
+.action-button.payment:hover {
+  background-color: #d97706;
+}
+
+.pending-payments-section {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 24px;
+  margin-top: 24px;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px 24px;
+}
+
+.overnight-card.pending {
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+}
+
+.overnight-card.pending:hover {
+  background-color: #fef3c7;
+}
+
+@media (max-width: 768px) {
+  .overnights-page {
+    padding: 16px;
+  }
+  
+  .overnights-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .overnights-controls {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .date-filters {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+  
+  .filter-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .overnight-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .overnight-id {
+    margin-right: 0;
+  }
+  
+  .overnight-info {
+    margin-right: 0;
+    width: 100%;
+  }
+  
+  .overnight-dates {
+    margin-right: 0;
+    align-items: flex-start;
+  }
+  
+  .overnight-actions {
+    width: 100%;
+    text-align: left;
+  }
+}

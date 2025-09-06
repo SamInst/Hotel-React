@@ -6,7 +6,7 @@ import icDayUse      from '../icons/entrada.png';
 import icReservas    from '../icons/reservas.png';
 import icFinanceiro  from '../icons/relatorios.png';
 import icItens       from '../icons/itens.png';
-import icClientes    from '../icons/pessoas.png';
+import icClientes    from '../icons/hospedes.png';
 import icPrecos      from '../icons/precos.png';
 
 const items = [

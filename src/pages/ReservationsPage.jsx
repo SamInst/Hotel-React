@@ -30,6 +30,8 @@ const mon = (d) => d.toLocaleDateString("pt-BR", { month: "long" });
 const pad = (n) => String(n).padStart(2, "0");
 const ymd = (d) =>
   `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const formatDateBR = (d) => 
+  `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 const addDays = (d, n) => {
   const x = new Date(d);
   x.setDate(x.getDate() + n);
@@ -120,49 +122,49 @@ export default function ReservationsPage() {
     {
       id: 101,
       roomId: 1,
-      start: "2025-08-21",
-      end: "2025-08-27",
+      start: "2025-09-01",
+      end: "2025-09-07",
       title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA",
     },
     {
       id: 106,
       roomId: 2,
-      start: "2025-08-25",
-      end: "2025-08-28",
+      start: "2025-09-05",
+      end: "2025-09-08",
       title: "CASA E CAFE ASSEORIA PROFISSIONAL LTDA",
     },
     {
       id: 102,
       roomId: 1,
-      start: "2025-08-27",
-      end: "2025-08-29",
-      title: "PESSOA CHATA QUE NAO QUER PAGAR",
+      start: "2025-09-07",
+      end: "2025-09-09",
+      title: "SARA BELA NUNES DINZI",
     },
     {
       id: 103,
       roomId: 2,
-      start: "2025-08-21",
-      end: "2025-08-23",
+      start: "2025-09-01",
+      end: "2025-09-03",
       title: "CASA E CAFE ASSESSORIA PROFISSIONAL LTDA",
     },
     {
       id: 104,
       roomId: 4,
-      start: "2025-08-24",
-      end: "2025-08-28",
+      start: "2025-09-24",
+      end: "2025-09-28",
       title: "EMPRESA DEMO",
     },
     {
       id: 105,
       roomId: 7,
-      start: "2025-08-26",
+      start: "2025-09-26",
       end: "2025-08-28",
       title: "EMPRESA DEMAO",
     },
     {
       id: 107,
       roomId: 1,
-      start: "2025-08-29",
+      start: "2025-09-29",
       end: "2025-09-02",
       title: "EMPRESA DEMAO",
     },
@@ -222,6 +224,30 @@ export default function ReservationsPage() {
       }
     }
     return arr;
+  }, [days]);
+
+  // cores para diferentes meses
+  const getMonthColor = (monthIndex) => {
+    const colors = [
+      { bg: "#f0f8ff", border: "#d6e8f5" }, // Azul muito claro
+      { bg: "#f5f8f0", border: "#e9dbd9" }, // Verde muito claro
+    ];
+    return colors[monthIndex % 2];
+  };
+
+  // mapa de cores por mês para usar nas etiquetas
+  const monthColors = useMemo(() => {
+    const colorMap = {};
+    let colorIndex = 0;
+    
+    for (let i = 0; i < days.length; i++) {
+      const monthKey = `${days[i].getFullYear()}-${days[i].getMonth()}`;
+      if (!colorMap[monthKey]) {
+        colorMap[monthKey] = getMonthColor(colorIndex++);
+      }
+    }
+    
+    return colorMap;
   }, [days]);
 
   const monthInputValue = `${viewDate.getFullYear()}-${pad(
@@ -767,6 +793,32 @@ export default function ReservationsPage() {
             }}
           >
             <div style={{ borderRight: "1px solid #e2e6ea" }} />
+            
+            {/* Fundo colorido por mês */}
+            {monthSegments.map((seg, segIdx) => {
+              const monthKey = `${days[seg.start].getFullYear()}-${days[seg.start].getMonth()}`;
+              const colors = monthColors[monthKey];
+              const left = LABEL_W + seg.start * DAY_W;
+              const width = (seg.end - seg.start + 1) * DAY_W;
+              
+              return (
+                <div
+                  key={`month-bg-${segIdx}`}
+                  style={{
+                    position: "absolute",
+                    left,
+                    width,
+                    top: 0,
+                    height: "100%",
+                    background: colors?.bg || "#f3f6f7",
+                    borderLeft: seg.start > 0 ? `1px solid ${colors?.border || "#e4eaee"}` : "none",
+                    borderRight: seg.end < days.length - 1 ? `1px solid ${colors?.border || "#e4eaee"}` : "none",
+                  }}
+                />
+              );
+            })}
+
+            {/* Etiquetas dos meses */}
             {visibleMonthBands.map((seg) => {
               const left = LABEL_W + seg.start * DAY_W;
               const width = (seg.end - seg.start + 1) * DAY_W;
@@ -783,12 +835,13 @@ export default function ReservationsPage() {
                     alignItems: "center",
                     justifyContent: "center",
                     pointerEvents: "none",
+                    zIndex: 1,
                   }}
                 >
                   <span
                     style={{
                       padding: "4px 12px",
-                      background: "#e9f0f2",
+                      background: "rgba(255, 255, 255, 0.9)",
                       border: "1px solid #d8e3e7",
                       borderRadius: 10,
                       fontSize: 13,
@@ -1029,11 +1082,12 @@ export default function ReservationsPage() {
                 style={{
                   position: "absolute",
                   left: LABEL_W + b.index * DAY_W,
-                  top: 0,
-                  height: contentHeight,
+                  top: -(MONTH_BAND_H + 72), // Estende até o topo incluindo faixa de mês e datas
+                  height: contentHeight + MONTH_BAND_H + 72,
                   width: 0,
                   borderLeft: "2px solid #93a1ab",
                   zIndex: 5,
+                  pointerEvents: "none",
                 }}
               />
             ))}
@@ -1193,89 +1247,24 @@ export default function ReservationsPage() {
         </div>
       </div>
 
-      {/* Modal – nova reserva */}
-      <Modal
+      {/* Modal de Nova Reserva - substituindo o resumo */}
+      <NewReservationModal
         open={openReview}
         onClose={() => {
           setOpenReview(false);
           resetSelection();
         }}
-      >
-        {review && (
-          <div
-            className="form-card"
-            style={{ boxShadow: "none", padding: 0, minWidth: 520 }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 12,
-              }}
-            >
-              <h3 className="form-card__title" style={{ margin: 0 }}>
-                Resumo de Reserva
-              </h3>
-            </div>
-            <div
-              className="cd-split"
-              style={{ gridTemplateColumns: "1fr 1fr", marginTop: 0 }}
-            >
-              <div>
-                <h4>Dados</h4>
-                <div className="kv">
-                  <strong>Quarto:</strong>
-                  <span>{review.room.name}</span>
-                </div>
-                <div className="kv">
-                  <strong>Diárias:</strong>
-                  <span>{review.nights}</span>
-                </div>
-                <div className="kv">
-                  <strong>Checkin:</strong>
-                  <span>{review.checkin.toLocaleDateString("pt-BR")}</span>
-                </div>
-                <div className="kv">
-                  <strong>Checkout:</strong>
-                  <span>{review.checkout.toLocaleDateString("pt-BR")}</span>
-                </div>
-              </div>
-              <div>
-                <h4>Valores</h4>
-                <div className="kv">
-                  <strong>Valor Diaria:</strong>
-                  <span>R$ {review.nightly.toFixed(2)}</span>
-                </div>
-                <div className="kv">
-                  <strong>Valor Total:</strong>
-                  <span>R$ {review.total.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-            <div className="form-actions" style={{ marginTop: 16 }}>
-              <button
-                className="btn"
-                onClick={() => {
-                  setOpenReview(false);
-                  resetSelection();
-                }}
-              >
-                Fechar
-              </button>
-              <button
-                className="btn btn--primary"
-                onClick={() => {
-                  setOpenReview(false);
-                  resetSelection();
-                }}
-              >
-                Confirmar Reserva
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        onSave={(newRes) => {
+          setReservations((prev) => [...prev, newRes]);
+          setOpenReview(false);
+          resetSelection();
+        }}
+        prefilledData={review ? {
+          roomId: review.room.id,
+          checkin: review.checkin,
+          checkout: review.checkout
+        } : null}
+      />
 
       {/* Modal de confirmação de ação */}
       <Modal
@@ -1365,6 +1354,11 @@ export default function ReservationsPage() {
         onSave={(newRes) => {
           setReservations((prev) => [...prev, newRes]);
         }}
+        prefilledData={review ? {
+          roomId: review.room.id,
+          checkin: review.checkin,
+          checkout: review.checkout
+        } : null}
       />
 
       {/* EDITOR SEPARADO (modal) */}
