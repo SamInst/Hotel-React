@@ -193,7 +193,7 @@ const OvernightsPage = () => {
                   )}
                   {overnight.status === 'pendente' && (
                     <button className="action-button payment" onClick={() => handlePayment(overnight.id)}>
-                      Cobrar
+                      Adicionar Pagamento
                     </button>
                   )}
                   {overnight.status === 'encerrada' && (
