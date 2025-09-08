@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar.jsx";
-import { ApartmentsPage } from "./pages/ApartmentsPage.jsx";
+import { ApartmentsPage } from "./pages/rooms/ApartmentsPage.jsx";
 import PeopleRegister from "./pages/PeopleRegister.jsx";
 import FinancePage from "./pages/FinancePage.jsx";
 import PricesPage from './pages/PricesPage.jsx';
