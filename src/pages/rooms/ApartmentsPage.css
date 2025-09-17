@@ -27,7 +27,7 @@
 .add-button {
   display: flex; align-items: center; gap: 8px;
   background: #3b82f6; color: white; border: none; padding: 10px 16px;
-  border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;
+  border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer;
   transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,.1);
 }
 .add-button:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,.1); }
@@ -41,7 +41,7 @@
 .search-input-wrapper { position: relative; width: 100%; max-width: 400px; }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6b7280; font-size: 14px; }
 .search-input {
-  width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #d1d5db; border-radius: 8px;
+  width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #d1d5db; border-radius: 10px;
   font-size: 14px; background: white; outline: none; transition: all .2s ease;
 }
 .search-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
@@ -50,28 +50,28 @@
 .date-filter { display: flex; align-items: center; gap: 8px; }
 .date-filter label { font-size: 14px; font-weight: 500; color: #374151; white-space: nowrap; }
 .date-input {
-  padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;
+  padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;
   background: white; outline: none; transition: border-color .2s ease;
 }
 .date-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
-.clear-date-btn { border: 1px solid #e5e7eb; background: #fff; color: #374151; border-radius: 6px; padding: 8px 10px; font-weight: 600; cursor: pointer; }
+.clear-date-btn { border: 1px solid #e5e7eb; background: #fff; color: #374151; border-radius: 8px; padding: 8px 10px; font-weight: 600; cursor: pointer; }
 .clear-date-btn:hover { background: #f9fafb; }
 
 /* Filter Tabs */
 .filter-tabs { display: flex; gap: 8px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
 .filter-tab {
-  display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #e5e7eb; border-radius: 8px;
+  display: flex; align-items: center; gap: 8px; background: white; border: 1px solid #e5e7eb; border-radius: 10px;
   padding: 12px 16px; cursor: pointer; transition: all .2s ease; font-weight: 500; font-size: 14px; color: #374151; white-space: nowrap; min-width: fit-content;
 }
 .filter-tab:hover { background: #f9fafb; border-color: #d1d5db; }
 .filter-tab.active { color: white; }
 .filter-tab.blue.active { background: linear-gradient(135deg, #1f2937, #111827); border-color: #0f172a; }
 .filter-tab.green.active { background: linear-gradient(135deg, #0f766e, #115e59); border-color: #134e4a; }
-.filter-tab.red.active { background: linear-gradient(135deg, #b91c1c, #7f1d1d); border-color: #7f1d1d; }
-.filter-tab.orange.active { background: linear-gradient(135deg, #b45309, #92400e); border-color: #92400e; }
-.filter-tab.yellow.active { background: linear-gradient(135deg, #a16207, #854d0e); border-color: #854d0e; }
-.filter-tab.purple.active { background: linear-gradient(135deg, #6d28d9, #5b21b6); border-color: #5b21b6; }
-.filter-tab.gray.active { background: linear-gradient(135deg, #374151, #1f2937); border-color: #1f2937; }
+.filter-tab.red.active { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
+.filter-tab.orange.active { background: linear-gradient(135deg, #b45309, #92400e); }
+.filter-tab.yellow.active { background: linear-gradient(135deg, #a16207, #854d0e); }
+.filter-tab.purple.active { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+.filter-tab.gray.active { background: linear-gradient(135deg, #374151, #1f2937); }
 .filter-icon { font-size: 16px; }
 .filter-count { background: rgba(0,0,0,.1); color: inherit; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; min-width: 20px; text-align: center; }
 .filter-tab.active .filter-count { background: rgba(255,255,255,.2); color: white; }
@@ -88,187 +88,198 @@
 .category-section:last-child { margin-bottom: 0; }
 .category-title { font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
 
-/* Grid - Cards com altura uniforme */
+/* Grid (redução ~30% da largura dos cards) */
 .rooms-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+  grid-template-columns: repeat(auto-fill, minmax(224px, 1fr));
   gap: 20px; 
 }
 
-/* Card - Altura uniforme e preenchimento completo */
+/* ============ CARD ============ */
 .room-card {
-  background: white; 
-  border-radius: 16px; 
-  transition: all .25s ease;
-  box-shadow: 0 6px 16px rgba(0,0,0,.14);
-  position: relative; 
-  overflow: hidden; 
-  display: flex; 
-  flex-direction: column; 
-  min-height: 320px; /* Altura uniforme */
+  background: #fff;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 450px;                 /* altura fixa */
   border: none;
+  border-left: 4px solid #e5e7eb;/* cor abaixo por status */
+  box-shadow: 0 6px 16px rgba(0,0,0,.14);
+  transition: box-shadow .25s ease;
+  outline: none;
 }
-.room-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(0,0,0,.18); }
+.room-card:hover,
+.room-card:focus,
+.room-card:focus-within { outline: none; }
 
-/* Cabeçalho colorido com gradientes por status */
+/* borda por status */
+.room-card.card--disponivel  { border-left-color: #065f46; }
+.room-card.card--ocupado     { border-left-color: #b91c1c; }
+.room-card.card--reservado   { border-left-color: #b45309; }
+.room-card.card--limpeza     { border-left-color: #a16207; }
+.room-card.card--diaria      { border-left-color: #6d28d9; }
+.room-card.card--manutencao  { border-left-color: #374151; }
+
+/* Hover: somente sombra na cor do status (cores internas NÃO mudam) */
+.room-card:hover { transform: none; }
+.room-card.card--disponivel:hover  { box-shadow: 0 8px 24px rgba(6,95,70,.35); }
+.room-card.card--ocupado:hover     { box-shadow: 0 8px 24px rgba(185,28,28,.35); }
+.room-card.card--reservado:hover   { box-shadow: 0 8px 24px rgba(180,83,9,.35); }
+.room-card.card--limpeza:hover     { box-shadow: 0 8px 24px rgba(161,98,7,.35); }
+.room-card.card--diaria:hover      { box-shadow: 0 8px 24px rgba(109,40,217,.35); }
+.room-card.card--manutencao:hover  { box-shadow: 0 8px 24px rgba(55,65,81,.35); }
+
+/* Header colorido encostando nas laterais */
 .room-card-header-colored {
   color: white; 
-  padding: 18px 20px 12px 20px; 
+  padding: 14px 16px 10px 16px; 
   position: relative;
-  border-radius: 16px 16px 0 0;
+  border-radius: 18px 18px 0 0;
+  margin: 0 -5px;
+  width: calc(100% + 10px);
 }
 .card--disponivel .room-card-header-colored { background: linear-gradient(135deg, #065f46, #064e3b); }
-.card--ocupado .room-card-header-colored   { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
+.card--ocupado   .room-card-header-colored { background: linear-gradient(135deg, #b91c1c, #7f1d1d); }
 .card--reservado .room-card-header-colored { background: linear-gradient(135deg, #b45309, #92400e); }
-.card--limpeza .room-card-header-colored   { background: linear-gradient(135deg, #a16207, #854d0e); }
-.card--diaria .room-card-header-colored    { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+.card--limpeza   .room-card-header-colored { background: linear-gradient(135deg, #a16207, #854d0e); }
+.card--diaria    .room-card-header-colored { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
 .card--manutencao .room-card-header-colored{ background: linear-gradient(135deg, #374151, #1f2937); }
+.card--disponivel:hover  .room-card-header-colored,
+.card--ocupado:hover     .room-card-header-colored,
+.card--reservado:hover   .room-card-header-colored,
+.card--limpeza:hover     .room-card-header-colored,
+.card--diaria:hover      .room-card-header-colored,
+.card--manutencao:hover  .room-card-header-colored { filter: none; }
 
+/* Header content */
 .header-content { display: flex; align-items: flex-start; }
-.room-info-header { display: flex; gap: 12px; flex: 1; }
+.room-info-header { display: flex; gap: 10px; flex: 1; }
 .room-icon {
-  font-size: 20px; background: rgba(255,255,255,.2); padding: 8px; border-radius: 50%;
-  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; margin-top: 2px;
+  font-size: 18px; background: rgba(255,255,255,.2); padding: 6px; border-radius: 50%;
+  width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; margin-top: 2px;
 }
-.room-title-section { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-.room-title { margin: 0; font-size: 18px; font-weight: 700; color: white; line-height: 1.2; }
+.room-title-section { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.room-title { margin: 0; font-size: 17px; font-weight: 700; color: white; line-height: 1.2; }
 
-/* Status abaixo do número */
+/* Status select */
 .status-below { display: flex; align-items: center; }
 .status-dropdown-container { position: relative; width: fit-content; }
 .status-dropdown-header {
   appearance: none; background: rgba(255,255,255,.18);
   border: 1px solid rgba(255,255,255,.35); border-radius: 10px;
-  padding: 8px 30px 8px 12px; font-size: 12px; font-weight: 700; color: #fff;
-  cursor: pointer; outline: none; transition: all .2s ease; min-width: 150px; backdrop-filter: blur(10px);
+  padding: 6px 28px 6px 10px; font-size: 12px; font-weight: 700; color: #fff;
+  cursor: pointer; outline: none; transition: all .2s ease; min-width: 130px; backdrop-filter: blur(8px);
 }
 .status-dropdown-header:hover:not(:disabled) { background: rgba(255,255,255,.28); border-color: rgba(255,255,255,.55); }
-.status-dropdown-header:focus { background: rgba(255,255,255,.28); box-shadow: 0 0 0 3px rgba(255,255,255,.22); }
+.status-dropdown-header:focus { background: rgba(255,255,255,.28); box-shadow: none; outline: none; }
 .status-dropdown-header:disabled { opacity: .6; cursor: not-allowed; }
 .status-dropdown-header option { background: white; color: #374151; padding: 8px; }
-.dropdown-arrow-header { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 10px; color: rgba(255,255,255,.85); pointer-events: none; }
+.dropdown-arrow-header { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; color: rgba(255,255,255,.85); pointer-events: none; }
 
-/* Body - Preenchimento completo sem espaços laterais */
+/* Body */
 .room-card-body {
   flex: 1;
-  padding: 16px 0px; /* Reduzido de 20px para 5px nas laterais */
+  padding: 12px 0;
   background: white;
   display: flex;
   flex-direction: column;
 }
 
-/* Seções internas com preenchimento completo */
-.guests-section,
-.dates-info,
-.capacity-section,
-.maintenance-section {
-  padding: 0 5px; /* Adicionado padding lateral de 5px */
-  margin-bottom: 12px;
+/* ========= BLOCOS INTERNOS (mesma largura do header) ========= */
+.block-fullwidth {
+  margin-left: -5px;
+  margin-right: -5px;
+  width: calc(100% + 10px);
+  border-radius: 14px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
-/* Ocupado/Reservado/Diária Encerrada */
+/* Ocupado/Reservado/Diária – Hóspede */
 .guest-item {
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  padding: 12px; 
-  background: #f8fafc;
-  border-radius: 8px; 
-  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px; padding: 10px;
+  border: 1px solid transparent;
 }
+.guest-item.block-fullwidth { padding-top: 12px; padding-bottom: 12px; }
+.card--ocupado   .guest-item { background: #fee2e2; border-color: #fecaca; }
+.card--reservado .guest-item { background: #fffbeb; border-color: #fde68a; }
+.card--diaria    .guest-item { background: #f5f3ff; border-color: #ddd6fe; }
+
 .guest-avatar-initials {
-  width: 44px; height: 44px; background: linear-gradient(135deg, #3b82f6, #2563eb);
+  width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #2563eb);
   color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 16px; font-weight: 700; flex-shrink: 0;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
 }
 .guest-details { flex: 1; }
-.guest-name { font-size: 14px; font-weight: 600; color: #1f2937; margin-bottom: 4px; display: block; }
-.guest-info { display: flex; flex-direction: column; gap: 2px; }
-.guest-info span { font-size: 12px; color: #6b7280; font-weight: 500; }
+.guest-name { font-size: 13px; font-weight: 800; color: #111827; margin-bottom: 4px; display: block; }
+.guest-info { display: grid; grid-template-columns: 1fr; row-gap: 2px; }
+.guest-info span { font-size: 12px; color: #374151; font-weight: 600; }
 
-/* Datas */
+/* Datas – menos altura/padding */
 .dates-info { 
-  background: #f1f5f9; 
-  border-radius: 8px; 
-  padding: 12px; 
-  margin-top: 12px; 
+  border-radius: 14px;
+  padding: 8px 16px;
+  margin-top: 10px;
+  border: 1px solid transparent;
 }
-.date-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
-.date-label { font-size: 12px; font-weight: 500; color: #64748b; }
-.date-value { font-size: 13px; font-weight: 600; color: #1e293b; text-align: right; }
-.time { font-size: 11px; color: #3b82f6; font-weight: 500; }
+.dates-info.block-fullwidth { padding-top: 8px; padding-bottom: 8px; }
+.card--ocupado   .dates-info { background: #fee2e2; border-color: #fecaca; }
+.card--reservado .dates-info { background: #fffbeb; border-color: #fde68a; }
+.card--diaria    .dates-info { background: #f5f3ff; border-color: #ddd6fe; }
 
-/* Disponível */
-.capacity-section { padding: 12px 0; }
+.date-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; }
+.date-label { font-size: 12px; font-weight: 800; }
+.date-value { font-size: 13px; font-weight: 800; color: #111827; text-align: right; }
+.card--ocupado   .date-label { color: #b91c1c; } .card--ocupado   .date-value { color: #7f1d1d; }
+.card--reservado .date-label { color: #b45309; } .card--reservado .date-value { color: #92400e; }
+.card--diaria    .date-label { color: #6d28d9; } .card--diaria    .date-value { color: #5b21b6; }
+.time { font-size: 11px; opacity: .9; }
+
+/* Disponível – bloco na mesma largura do header + lista de camas em coluna */
+.capacity-section { padding: 8px 0; }
 .capacity-info { 
-  background: #ecfdf5; 
-  border-radius: 8px; 
-  padding: 16px; 
-  border: 1px solid #bbf7d0; 
+  background: #ecfdf5; border-radius: 14px; padding: 12px; border: 1px solid #bbf7d0;
 }
-.capacity-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.capacity-label { font-size: 13px; font-weight: 500; color: #047857; }
-.capacity-value { font-size: 14px; font-weight: 600; color: #065f46; }
-.bed-configuration { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #bbf7d0; }
-.bed-icon { font-size: 16px; }
-.bed-text { font-size: 13px; font-weight: 500; color: #047857; }
+.capacity-section .capacity-info.block-fullwidth { padding-left: 16px; padding-right: 16px; }
+.capacity-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.capacity-label { font-size: 12px; font-weight: 700; color: #047857; }
+.capacity-value { font-size: 13px; font-weight: 800; color: #065f46; }
 
-/* Limpeza/Manutenção */
-.maintenance-section { padding: 12px 0; }
+/* linhas de camas */
+.bed-configuration { margin-top: 6px; padding-top: 6px; border-top: 1px solid #bbf7d0; }
+.bed-lines { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.bed-line { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: #047857; }
 
-/* Padrão (Limpeza) */
+/* Limpeza/Manutenção – bloco na mesma largura do header */
+.maintenance-section { padding: 8px 0; }
 .status-info { 
-  background: #fffbeb; 
-  border: 1px solid #fed7aa; 
-  border-radius: 8px; 
-  padding: 12px; 
-  text-align: center; 
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #fffbeb; border: 1px solid #fed7aa; border-radius: 14px; padding: 10px;
+  text-align: center; display: flex; align-items: center; justify-content: center;
 }
-.status-message { font-size: 13px; color: #92400e; font-weight: 500; line-height: 1.4; }
+.card--manutencao .status-info { background: #f3f4f6; border-color: #d1d5db; }
+.status-message { font-size: 12px; color: #92400e; font-weight: 700; line-height: 1.35; }
+.card--manutencao .status-message { color: #374151; }
 
-/* Ajuste específico para MANUTENÇÃO (tema cinza) */
-.card--manutencao .status-info { 
-  background: #f3f4f6; 
-  border-color: #d1d5db; 
-}
-.card--manutencao .status-message { 
-  color: #374151; 
-}
-
-/* Footer - botão branco com preenchimento lateral */
+/* Footer */
 .room-card-footer { 
-  padding: 16px 5px; /* Reduzido de 20px para 5px nas laterais */
-  border-top: 1px solid #f1f3f4; 
-  background: white;
+  padding: 12px 5px; border-top: 1px solid #f1f3f4; background: white; margin-top: auto;
 }
 .details-btn {
-  width: 100%; 
-  background: #ffffff; 
-  border: 2px solid #3b82f6; 
-  color: #3b82f6;
-  padding: 12px 16px; 
-  border-radius: 10px; 
-  font-weight: 700; 
-  font-size: 14px;
-  cursor: pointer; 
-  transition: all .2s ease;
+  width: 100%; background: #ffffff; border: 2px solid #3b82f6; color: #3b82f6;
+  padding: 10px 14px; border-radius: 12px; font-weight: 800; font-size: 13px;
+  cursor: pointer; transition: all .2s ease;
 }
 .details-btn:hover { 
-  background: #f8fafc; 
-  border-color: #2563eb; 
-  color: #2563eb; 
-  transform: translateY(-1px); 
-  box-shadow: 0 4px 8px rgba(59,130,246,.15); 
+  background: #fff; border-color: #92400e; color: #92400e;
+  transform: translateY(-1px); box-shadow: 0 4px 8px rgba(59,130,246,.15); 
 }
 
-/* Responsive */
+/* Responsivo */
 @media (max-width: 1200px) {
   .apartments-page { padding: 16px; }
-  .rooms-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .rooms-grid { grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 16px; }
 }
 @media (max-width: 768px) {
   .apartments-page { padding: 12px; }
@@ -301,4 +312,231 @@
   .rooms-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .room-card { box-shadow: none; border: 1px solid #000; break-inside: avoid; }
   .details-button { display: none; }
+}
+
+/* ======= Remover qualquer variação de cor no hover ======= */
+.room-card:hover,
+.card--disponivel:hover,
+.card--ocupado:hover,
+.card--reservado:hover,
+.card--limpeza:hover,
+.card--diaria:hover,
+.card--manutencao:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,.14) !important; /* igual ao estado normal */
+}
+.card--disponivel:hover  .room-card-header-colored,
+.card--ocupado:hover     .room-card-header-colored,
+.card--reservado:hover   .room-card-header-colored,
+.card--limpeza:hover     .room-card-header-colored,
+.card--diaria:hover      .room-card-header-colored,
+.card--manutencao:hover  .room-card-header-colored { filter: none !important; }
+
+/* ======= Bloco do hóspede arredondado + linhas ======= */
+.guest-item {
+  border-radius: 14px !important;
+  overflow: hidden;                 /* garante os cantos arredondados */
+  padding: 12px 16px;
+  border: 1px solid transparent;
+}
+
+/* cores do bloco por status (mantém o padrão que você já usa) */
+.card--ocupado   .guest-item { background: #fee2e2; border-color: #fecaca; }
+.card--reservado .guest-item { background: #fffbeb; border-color: #fde68a; }
+.card--diaria    .guest-item { background: #f5f3ff; border-color: #ddd6fe; }
+
+/* Nome em cima */
+.guest-name { display:block; font-size:13px; font-weight:800; color:#111827; margin-bottom:6px; }
+
+/* Linhas embaixo (CPF / Telefone / Acompanhantes) */
+.guest-info-lines { margin-top: 2px; }
+.guest-line {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 0;
+  border-top: 1px solid #e5e7eb;
+}
+.guest-line:first-child { border-top: none; padding-top: 0; }
+.guest-line-label { font-size:12px; font-weight:800; color:#374151; }
+.guest-line-value { font-size:12px; font-weight:800; color:#111827; }
+
+/* cores de texto/bordas das linhas por status */
+.card--ocupado   .guest-line { border-color:#fecaca; }
+.card--reservado .guest-line { border-color:#fde68a; }
+.card--diaria    .guest-line { border-color:#ddd6fe; }
+
+.card--ocupado   .guest-line-label { color:#b91c1c; }
+.card--reservado .guest-line-label { color:#b45309; }
+.card--diaria    .guest-line-label { color:#6d28d9; }
+
+/* ======= Datas mais compactas e arredondadas (mesma largura do header) ======= */
+.dates-info.block-fullwidth {
+  border-radius:14px !important;
+  padding: 8px 16px !important;
+}
+.date-row { padding: 2px 0; }
+
+/* ======= Garantir a mesma largura do header também em Disponível/Limpeza/Manutenção ======= */
+.capacity-info.block-fullwidth,
+.status-info.block-fullwidth,
+.guest-item.block-fullwidth,
+.dates-info.block-fullwidth {
+  margin-left: -5px;
+  margin-right: -5px;
+  width: calc(100% + 10px);
+}
+
+/* ======= Camas em coluna ======= */
+.bed-lines { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+.bed-line  { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; color:#047857; }
+
+/* ============ Loading Overlay ============ */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #ddd;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.loading-text {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ Toasts ============ */
+.toasts-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10000;
+}
+.toast {
+  min-width: 260px;
+  max-width: 360px;
+  background: #fff;
+  border-left: 5px solid #999;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.toast--error { border-left-color: #ef4444; }
+.toast--info  { border-left-color: #3b82f6; }
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toast-icon { font-size: 18px; }
+.toast-message { color: #1f2937; font-size: 14px; line-height: 1.35; }
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+.toast-close:hover { color: #111827; }
+
+
+/* ====== EditRoomModal – escopo isolado ====== */
+.edit-room-modal .modal {
+  max-width: 840px;
+  width: 96vw;
+}
+
+/* grid do formulário */
+.edit-room-modal .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin-top: 12px;
+}
+
+@media (min-width: 900px) {
+  .edit-room-modal .form-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.edit-room-modal .form-row { display: flex; flex-direction: column; }
+.edit-room-modal .form-row--full { grid-column: 1 / -1; }
+
+.edit-room-modal .field-label {
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.edit-room-modal .field-control {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #111827;
+}
+
+.edit-room-modal .field-control:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+}
+
+/* camas */
+.edit-room-modal .beds-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.edit-room-modal .bed-item span {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+/* barra de ações */
+.edit-room-modal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.edit-room-modal .btn.primary {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+}
+
+.edit-room-modal .btn.primary:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }

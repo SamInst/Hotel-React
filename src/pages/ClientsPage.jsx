@@ -1,14 +1,8 @@
 // src/pages/ClientsPage.jsx
 import React, { useMemo, useState } from 'react';
-import { PAISES, ESTADOS, MUNICIPIOS } from '../data/geo.js';
 import { PEOPLE } from '../data/people.js';
 import { ClientDetailsModal } from '../components/ClientDetailsModal.jsx';
-
-const SEXO_OPTIONS = [
-  { value: 1, label: 'Masculino' },
-  { value: 2, label: 'Feminino' },
-  { value: 3, label: 'Outro' }
-];
+import { ClientRegistrationModal } from '../components/ClientRegistrationModal.jsx';
 
 function fmtDate(iso) {
   if (!iso) return '-';
@@ -24,289 +18,133 @@ function onlyDigits(s) {
 }
 
 export function ClientsPage() {
-  const [form, setForm] = useState({
-    nome: '',
-    cpf: '',
-    rg: '',
-    email: '',
-    telefone: '',
-    data_nascimento: '',
-    sexo: 2,
-    fk_pais: 1,
-    fk_estado: 10,
-    fk_municipio: 100,
-    cep: '',
-    endereco: '',
-    complemento: '',
-    bairro: '',
-    numero: ''
-  });
-
-  const [qNome, setQNome] = useState('');
-  const [qCpf, setQCpf] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const [selected, setSelected] = useState(null);
 
-  const estadosFiltrados = useMemo(
-    () => ESTADOS.filter(e => e.fk_pais === Number(form.fk_pais)),
-    [form.fk_pais]
-  );
-
-  const municipiosFiltrados = useMemo(
-    () => MUNICIPIOS.filter(m => m.fk_estado === Number(form.fk_estado)),
-    [form.fk_estado]
-  );
-
-  const setField = (k, v) => setForm(s => ({ ...s, [k]: v }));
-
-  const onChangePais = (e) => {
-    const fk_pais = Number(e.target.value);
-    const estados = ESTADOS.filter(x => x.fk_pais === fk_pais);
-    const fk_estado = estados.length ? estados[0].id : '';
-    const municipios = MUNICIPIOS.filter(x => x.fk_estado === fk_estado);
-    const fk_municipio = municipios.length ? municipios[0].id : '';
-    setForm(s => ({ ...s, fk_pais, fk_estado, fk_municipio }));
-  };
-
-  const onChangeEstado = (e) => {
-    const fk_estado = Number(e.target.value);
-    const municipios = MUNICIPIOS.filter(x => x.fk_estado === fk_estado);
-    const fk_municipio = municipios.length ? municipios[0].id : '';
-    setForm(s => ({ ...s, fk_estado, fk_municipio }));
-  };
-
-  const clear = () => {
-    setForm({
-      nome: '',
-      cpf: '',
-      rg: '',
-      email: '',
-      telefone: '',
-      data_nascimento: '',
-      sexo: 2,
-      fk_pais: 1,
-      fk_estado: 10,
-      fk_municipio: 100,
-      cep: '',
-      endereco: '',
-      complemento: '',
-      bairro: '',
-      numero: ''
-    });
-  };
-
-  const submit = (e) => {
-    e.preventDefault();
-    const payload = {
-      nome: form.nome,
-      cpf: form.cpf,
-      rg: form.rg,
-      email: form.email,
-      telefone: form.telefone,
-      data_nascimento: form.data_nascimento || null,
-      sexo: Number(form.sexo),
-      fk_pais: Number(form.fk_pais),
-      fk_estado: Number(form.fk_estado),
-      fk_municipio: Number(form.fk_municipio),
-      cep: form.cep,
-      endereco: form.endereco,
-      complemento: form.complemento,
-      bairro: form.bairro,
-      numero: form.numero
-    };
-    console.log('payload pessoa =>', payload);
-    alert('Dados prontos para enviar (veja o console).');
-  };
-
   const filteredPeople = useMemo(() => {
-    const name = qNome.trim().toLowerCase();
-    const cpf = onlyDigits(qCpf);
+    const query = searchQuery.trim().toLowerCase();
+    const queryDigits = onlyDigits(searchQuery);
+    
+    if (!query) return PEOPLE;
+    
     return PEOPLE.filter(p => {
-      const matchName = !name || p.nome.toLowerCase().includes(name);
-      const matchCpf = !cpf || onlyDigits(p.cpf).includes(cpf);
-      return matchName && matchCpf;
+      const matchName = p.nome.toLowerCase().includes(query);
+      const matchCpf = queryDigits && onlyDigits(p.cpf).includes(queryDigits);
+      return matchName || matchCpf;
     });
-  }, [qNome, qCpf]);
+  }, [searchQuery]);
 
-  const openDetails = (p) => { setSelected(p); setDetailsOpen(true); };
+  const openDetails = (p) => { 
+    setSelected(p); 
+    setDetailsOpen(true); 
+  };
 
   return (
-    <div className="clients-layout">
-      <form className="form-page clients-card" onSubmit={submit}>
-        <section className="form-card" style={{boxShadow:'none', padding:0}}>
-          <h3 className="form-card__title">Dados Pessoais</h3>
+    <div className="page-container">
+      <div className="page-header">
+        <h1 className="page-title">Clientes</h1>
+        <button 
+          type="button" 
+          className="btn btn--primary btn--add"
+          onClick={() => setRegistrationOpen(true)}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          Adicionar Cliente
+        </button>
+      </div>
 
-          <div className="form-grid">
-            <div className="avatar col-2">
-              <div className="avatar__circle" />
-            </div>
-
-            <div className="field col-4">
-              <label>Nome Completo</label>
-              <input className="control" value={form.nome} onChange={e=>setField('nome', e.target.value)} />
-            </div>
-
-            <div className="field col-3">
-              <label>CPF</label>
-              <input className="control" value={form.cpf} onChange={e=>setField('cpf', e.target.value)} />
-            </div>
-
-            <div className="field col-3">
-              <label>RG</label>
-              <input className="control" value={form.rg} onChange={e=>setField('rg', e.target.value)} />
-            </div>
-
-            <div className="field col-6">
-              <label>Email</label>
-              <input className="control" type="email" value={form.email} onChange={e=>setField('email', e.target.value)} />
-            </div>
-
-            <div className="field col-3">
-              <label>Data Nascimento</label>
-              <input className="control" type="date" value={form.data_nascimento} onChange={e=>setField('data_nascimento', e.target.value)} />
-            </div>
-
-            <div className="field col-3">
-              <label>Gênero</label>
-              <select className="control" value={form.sexo} onChange={e=>setField('sexo', e.target.value)}>
-                {SEXO_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Nacionalidade (País)</label>
-              <select className="control" value={form.fk_pais} onChange={onChangePais}>
-                {PAISES.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Estado (Nacionalidade)</label>
-              <select className="control" value={form.fk_estado} onChange={onChangeEstado}>
-                {estadosFiltrados.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Município (Nacionalidade)</label>
-              <select className="control" value={form.fk_municipio} onChange={e=>setField('fk_municipio', Number(e.target.value))}>
-                {municipiosFiltrados.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Telefone</label>
-              <input className="control" value={form.telefone} onChange={e=>setField('telefone', e.target.value)} />
-            </div>
-          </div>
-        </section>
-
-        <section className="form-card" style={{boxShadow:'none', padding:0, marginTop:12}}>
-          <h3 className="form-card__title">Endereço</h3>
-
-          <div className="form-grid">
-            <div className="field col-3">
-              <label>CEP</label>
-              <input className="control" value={form.cep} onChange={e=>setField('cep', e.target.value)} />
-            </div>
-
-            <div className="field col-9">
-              <label>Logradouro</label>
-              <input className="control" value={form.endereco} onChange={e=>setField('endereco', e.target.value)} />
-            </div>
-
-            <div className="field col-6">
-              <label>Complemento</label>
-              <input className="control" value={form.complemento} onChange={e=>setField('complemento', e.target.value)} />
-            </div>
-
-            <div className="field col-4">
-              <label>Bairro</label>
-              <input className="control" value={form.bairro} onChange={e=>setField('bairro', e.target.value)} />
-            </div>
-
-            <div className="field col-2">
-              <label>Número</label>
-              <input className="control" value={form.numero} onChange={e=>setField('numero', e.target.value)} />
-            </div>
-
-            <div className="field col-4">
-              <label>País</label>
-              <select className="control" value={form.fk_pais} onChange={onChangePais}>
-                {PAISES.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Estado</label>
-              <select className="control" value={form.fk_estado} onChange={onChangeEstado}>
-                {estadosFiltrados.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="field col-4">
-              <label>Município</label>
-              <select className="control" value={form.fk_municipio} onChange={e=>setField('fk_municipio', Number(e.target.value))}>
-                {municipiosFiltrados.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
-              </select>
+      <div className="page-content">
+        <div className="clients-container">
+          <div className="clients-filters">
+            <div className="search-field">
+              <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              <input 
+                className="search-input" 
+                placeholder="Buscar por nome ou CPF..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
             </div>
           </div>
 
-          <div className="form-actions">
-            <button type="button" className="btn btn--muted" onClick={clear}>Limpar Campos</button>
-            <button type="submit" className="btn btn--primary">Cadastrar Pessoa</button>
-          </div>
-        </section>
-      </form>
-
-      <aside className="clients-card">
-        <h3 className="form-card__title" style={{marginBottom:10}}>Cadastrados</h3>
-
-        <div className="clients-filter">
-          <div className="field">
-            <label>Nome:</label>
-            <input className="control" placeholder="Buscar por nome" value={qNome} onChange={e=>setQNome(e.target.value)} />
-          </div>
-          <div className="field">
-            <label>CPF:</label>
-            <input className="control" placeholder="Buscar por CPF" value={qCpf} onChange={e=>setQCpf(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="clients-table">
-          <div className="clients-thead">
-            <div>Cliente</div>
-            <div style={{textAlign:'right'}}>Última Hospedagem</div>
-          </div>
-
-          <div className="clients-list">
+          <div className="clients-grid">
             {filteredPeople.map(p => (
-              <button
+              <div
                 key={p.id}
-                type="button"
-                className="client-row client-row--button"
-                onClick={()=>openDetails(p)}
+                className="client-card"
+                onClick={() => openDetails(p)}
               >
-                <div className="client-main">
-                  <img className="client-avatar" src={p.avatar} alt="" />
-                  <div>
-                    <div className="client-name">{p.nome}</div>
-                    <div className="client-phone">Telefone: {p.telefone}</div>
+                <div className="client-header">
+                  <div className="client-avatar-container">
+                    <img className="client-avatar" src={p.avatar} alt="" />
+                  </div>
+                  <div className="client-info">
+                    <h3 className="client-name">{p.nome}</h3>
+                    <div className="client-meta">
+                      <span className="client-cpf">CPF: {p.cpf}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="client-dates">
-                  {fmtDate(p.ultimaHospedagemInicio)} - {fmtDate(p.ultimaHospedagemFim)}
+                
+                <div className="client-contact">
+                  <div className="contact-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2"/>
+                      <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <span>{p.email || '-'}</span>
+                  </div>
+                  <div className="contact-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92V19.92C22 20.52 21.39 21 20.66 21C9.44 21 0.58 12.14 0.58 0.92C0.58 0.19 1.06 -0.42 1.66 -0.42H4.66C5.25 -0.42 5.83 0.04 5.96 0.62L6.96 5.62C7.09 6.2 6.83 6.79 6.3 7.17L4.1 8.9C5.74 12.38 8.62 15.26 12.1 16.9L13.83 14.7C14.21 14.17 14.8 13.91 15.38 14.04L20.38 15.04C20.96 15.17 21.42 15.75 21.42 16.34V19.34C21.42 20 20.83 20.58 20.17 20.58H20.08C20.08 20.58 20.08 20.58 22 16.92Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+                    </svg>
+                    <span>{p.telefone || '-'}</span>
+                  </div>
                 </div>
-              </button>
+
+                <div className="client-footer">
+                  <div className="last-stay">
+                    <div className="last-stay-label">Última Hospedagem</div>
+                    <div className="last-stay-dates">
+                      {fmtDate(p.ultimaHospedagemInicio)} - {fmtDate(p.ultimaHospedagemFim)}
+                    </div>
+                  </div>
+                </div>
+              </div>
             ))}
+
+            {filteredPeople.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </div>
+                <div className="empty-text">Nenhum cliente encontrado</div>
+                <div className="empty-subtext">Tente ajustar os filtros ou cadastrar um novo cliente</div>
+              </div>
+            )}
           </div>
         </div>
-      </aside>
+      </div>
 
       <ClientDetailsModal
         open={detailsOpen}
-        onClose={()=>setDetailsOpen(false)}
+        onClose={() => setDetailsOpen(false)}
         person={selected}
+      />
+
+      <ClientRegistrationModal
+        open={registrationOpen}
+        onClose={() => setRegistrationOpen(false)}
       />
     </div>
   );

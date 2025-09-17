@@ -1,280 +1,165 @@
+// src/pages/CompanyPage.jsx
 import React, { useMemo, useState } from 'react';
-import { PEOPLE } from '../data/people.js';
 import { COMPANIES } from '../data/companies.js';
 import { CompanyDetailsModal } from '../components/CompanyDetailsModal.jsx';
+import { CompanyRegistrationModal } from '../components/CompanyRegistrationModal.jsx';
 
-const UF_TO_NOME = {
-  AC:'Acre', AL:'Alagoas', AM:'Amazonas', AP:'Amapá', BA:'Bahia', CE:'Ceará',
-  DF:'Distrito Federal', ES:'Espírito Santo', GO:'Goiás', MA:'Maranhão',
-  MT:'Mato Grosso', MS:'Mato Grosso do Sul', MG:'Minas Gerais', PA:'Pará',
-  PB:'Paraíba', PR:'Paraná', PE:'Pernambuco', PI:'Piauí', RJ:'Rio de Janeiro',
-  RN:'Rio Grande do Norte', RO:'Rondônia', RS:'Rio Grande do Sul', RR:'Roraima',
-  SC:'Santa Catarina', SE:'Sergipe', SP:'São Paulo', TO:'Tocantins'
-};
-
-const initialForm = {
-  nome_empresa: '',
-  cnpj: '',
-  telefone: '',
-  email: '',
-  cep: '65066260',
-  endereco: '',
-  numero: '',
-  complemento: '',
-  bairro: '',
-  pais: 'Brasil',
-  estado: '',
-  municipio: '',
-  vinculados: []
-};
-
-export default function CompanyPage(){
-  const [form, setForm] = useState(initialForm);
+export default function CompanyPage() {
   const [companies, setCompanies] = useState(COMPANIES);
   const [q, setQ] = useState('');
-  const [linkQuery, setLinkQuery] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
   const [selected, setSelected] = useState(null);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if(!s) return companies;
+    if (!s) return companies;
     return companies.filter(c =>
       c.nome_empresa.toLowerCase().includes(s) ||
       c.cnpj.toLowerCase().includes(s)
     );
   }, [q, companies]);
 
-  const linkCandidates = useMemo(()=>{
-    const s = linkQuery.trim().toLowerCase();
-    if(!s) return [];
-    const sDigits = s.replace(/\D/g,'');
-    return PEOPLE.filter(p =>
-      p.nome.toLowerCase().includes(s) ||
-      (p.cpf || '').replace(/\D/g,'').includes(sDigits)
-    );
-  }, [linkQuery]);
-
-  async function handleCepBlur(){
-    const cepDigits = (form.cep || '').replace(/\D/g,'');
-    if(cepDigits.length !== 8) return;
-    try{
-      const r = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
-      const data = await r.json();
-      if(data?.erro) return;
-      setForm(f => ({
-        ...f,
-        cep: data.cep || f.cep,
-        endereco: data.logradouro || f.endereco,
-        bairro: data.bairro || f.bairro,
-        municipio: data.localidade || f.municipio,
-        estado: data.estado || UF_TO_NOME[data.uf] || f.estado,
-        pais: 'Brasil'
-      }));
-    }catch(e){}
-  }
-
-  function onChange(k, v){ setForm(f => ({...f, [k]: v})); }
-  function addLinked(p){
-    setForm(f => f.vinculados.find(x=>x.id===p.id) ? f : ({...f, vinculados:[...f.vinculados, p]}));
-  }
-  function removeLinked(id){
-    setForm(f => ({...f, vinculados: f.vinculados.filter(x=>x.id!==id)}));
-  }
-  function submit(){
-    const novo = {
-      id: Math.max(0, ...companies.map(c=>c.id))+1,
-      nome_empresa: form.nome_empresa,
-      cnpj: form.cnpj,
-      telefone: form.telefone,
-      email: form.email,
-      endereco: form.endereco,
-      cep: form.cep,
-      numero: form.numero,
-      complemento: form.complemento,
-      bairro: form.bairro,
-      pais: form.pais,
-      estado: form.estado,
-      municipio: form.municipio,
-      vinculados: form.vinculados,
-      situacao: 'Cadastrado'
-    };
-    setCompanies([novo, ...companies]);
-    setForm(initialForm);
-    setLinkQuery('');
-  }
+  const openDetails = (company) => {
+    setSelected(company);
+    setDetailsOpen(true);
+  };
 
   return (
-    <div className="clients-layout">
-      <div className="form-stack">
-        <div className="form-card">
-          <h3 className="form-card__title">Dados Empresariais</h3>
-          <div className="form-grid">
-            <div className="col-12 field">
-              <label>Nome/Razao Social</label>
-              <input className="control" value={form.nome_empresa} onChange={e=>onChange('nome_empresa', e.target.value)} />
-            </div>
-            <div className="col-6 field">
-              <label>Email</label>
-              <input className="control" value={form.email} onChange={e=>onChange('email', e.target.value)} />
-            </div>
-            <div className="col-3 field">
-              <label>CNPJ</label>
-              <input className="control" value={form.cnpj} onChange={e=>onChange('cnpj', e.target.value)} />
-            </div>
-            <div className="col-3 field">
-              <label>Telefone</label>
-              <input className="control" value={form.telefone} onChange={e=>onChange('telefone', e.target.value)} />
-            </div>
-          </div>
-        </div>
+    <div className="page-container">
+      <div className="page-header">
+        <h1 className="page-title">Empresas</h1>
+        <button 
+          type="button" 
+          className="btn btn--primary btn--add"
+          onClick={() => setRegistrationOpen(true)}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          Adicionar Empresa
+        </button>
+      </div>
 
-        <div className="form-card">
-          <h3 className="form-card__title">Endereço</h3>
-          <div className="form-grid">
-            <div className="col-3 field">
-              <label>CEP</label>
-              <input
-                className="control"
-                value={form.cep}
-                onChange={e=>onChange('cep', e.target.value)}
-                onBlur={handleCepBlur}
-                placeholder="00000000"
+      <div className="page-content">
+        <div className="companies-container">
+          <div className="companies-filters">
+            <div className="search-field">
+              <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                <path d="m21 21-4.35-4.35" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              <input 
+                className="search-input" 
+                placeholder="Buscar por nome da empresa ou CNPJ..." 
+                value={q} 
+                onChange={e=>setQ(e.target.value)} 
               />
             </div>
-            <div className="col-9 field">
-              <label>Logradouro</label>
-              <input className="control" value={form.endereco} onChange={e=>onChange('endereco', e.target.value)} />
-            </div>
-            <div className="col-6 field">
-              <label>Complemento</label>
-              <input className="control" value={form.complemento} onChange={e=>onChange('complemento', e.target.value)} />
-            </div>
-            <div className="col-3 field">
-              <label>Bairro</label>
-              <input className="control" value={form.bairro} onChange={e=>onChange('bairro', e.target.value)} />
-            </div>
-            <div className="col-3 field">
-              <label>Número</label>
-              <input className="control" value={form.numero} onChange={e=>onChange('numero', e.target.value)} />
-            </div>
-            <div className="col-4 field">
-              <label>Pais</label>
-              <input className="control" value={form.pais} onChange={e=>onChange('pais', e.target.value)} />
-            </div>
-            <div className="col-4 field">
-              <label>Estado</label>
-              <input className="control" value={form.estado} onChange={e=>onChange('estado', e.target.value)} />
-            </div>
-            <div className="col-4 field">
-              <label>Município</label>
-              <input className="control" value={form.municipio} onChange={e=>onChange('municipio', e.target.value)} />
-            </div>
-          </div>
-        </div>
-
-        <div className="form-card">
-          <h3 className="form-card__title">Vincular Pessoa</h3>
-          <div className="field">
-            <label>Nome ou CPF</label>
-            <input
-              className="control"
-              placeholder="Pesquisar..."
-              value={linkQuery}
-              onChange={e=>setLinkQuery(e.target.value)}
-            />
           </div>
 
-          {linkCandidates.length > 0 && (
-            <div className="clients-table" style={{marginTop:12}}>
-              <div className="clients-thead" style={{gridTemplateColumns:'1fr 120px'}}>
-                <div>Nome</div>
-                <div>CPF</div>
-              </div>
-              <div>
-                {linkCandidates.map(p => (
-                  <button
-                    key={p.id}
-                    className="client-row client-row--button"
-                    style={{gridTemplateColumns:'1fr 120px'}}
-                    onClick={()=>addLinked(p)}
-                  >
-                    <div className="client-main">
-                      <img className="client-avatar" src={p.avatar} alt="" />
-                      <div className="client-name">{p.nome}</div>
+          <div className="companies-grid">
+            {filtered.map(c => (
+              <div
+                key={c.id}
+                className="company-card"
+                onClick={() => openDetails(c)}
+              >
+                <div className="company-header">
+                  <div className="company-avatar-container">
+                    <div className="company-avatar">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 21H21V19H20V4C20 3.45 19.55 3 19 3H5C4.45 3 4 3.45 4 4V19H3V21ZM6 5H18V19H6V5Z" fill="currentColor"/>
+                        <rect x="8" y="7" width="2" height="2" fill="currentColor"/>
+                        <rect x="14" y="7" width="2" height="2" fill="currentColor"/>
+                        <rect x="8" y="11" width="2" height="2" fill="currentColor"/>
+                        <rect x="14" y="11" width="2" height="2" fill="currentColor"/>
+                        <rect x="11" y="15" width="2" height="4" fill="currentColor"/>
+                      </svg>
                     </div>
-                    <div className="client-dates">{p.cpf || '—'}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {form.vinculados.length > 0 && (
-            <div className="clients-table" style={{marginTop:12}}>
-              <div className="clients-thead" style={{gridTemplateColumns:'1fr 120px 40px'}}>
-                <div>Nome</div><div>CPF</div><div></div>
-              </div>
-              <div>
-                {form.vinculados.map(p => (
-                  <div key={p.id} className="client-row" style={{gridTemplateColumns:'1fr 120px 40px'}}>
-                    <div className="client-main">
-                      <img className="client-avatar" src={p.avatar} alt="" />
-                      <div className="client-name">{p.nome}</div>
-                    </div>
-                    <div className="client-dates">{p.cpf || '—'}</div>
-                    <button className="btn btn--danger" onClick={()=>removeLinked(p.id)}>×</button>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  <div className="company-info">
+                    <h3 className="company-name">{c.nome_empresa}</h3>
+                    <div className="company-meta">
+                      <span className="company-cnpj">CNPJ: {c.cnpj}</span>
+                    </div>
+                  </div>
+                </div>
 
-          <div className="form-actions">
-            <button className="btn" onClick={()=>{setForm(initialForm); setLinkQuery('');}}>Limpar Campos</button>
-            <button className="btn btn--primary" onClick={submit}>Cadastrar Empresa</button>
+                <div className="company-contact">
+                  <div className="contact-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" strokeWidth="2"/>
+                      <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <span>{c.email || '-'}</span>
+                  </div>
+                  <div className="contact-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M22 16.92V19.92C22 20.52 21.39 21 20.66 21C9.44 21 0.58 12.14 0.58 0.92C0.58 0.19 1.06 -0.42 1.66 -0.42H4.66C5.25 -0.42 5.83 0.04 5.96 0.62L6.96 5.62C7.09 6.2 6.83 6.79 6.3 7.17L4.1 8.9C5.74 12.38 8.62 15.26 12.1 16.9L13.83 14.7C14.21 14.17 14.8 13.91 15.38 14.04L20.38 15.04C20.96 15.17 21.42 15.75 21.42 16.34V19.34C21.42 20 20.83 20.58 20.17 20.58H20.08C20.08 20.58 20.08 20.58 22 16.92Z" stroke="currentColor" strokeWidth="2" fill="none"/>
+                    </svg>
+                    <span>{c.telefone || '-'}</span>
+                  </div>
+                </div>
+
+                <div className="company-footer">
+                  <div className="company-location">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 10C21 17 12 23 12 23S3 17 3 10C3 5.03 7.03 1 12 1S21 5.03 21 10Z" stroke="currentColor" strokeWidth="2"/>
+                      <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    <span>{c.municipio}, {c.estado}</span>
+                  </div>
+                  <div className="company-status">
+                    <span className={`status-badge status-badge--${c.situacao?.toLowerCase()}`}>
+                      {c.situacao}
+                    </span>
+                  </div>
+                </div>
+
+                {c.vinculados && c.vinculados.length > 0 && (
+                  <div className="company-linked">
+                    <div className="linked-count">
+                      {c.vinculados.length} pessoa{c.vinculados.length !== 1 ? 's' : ''} vinculada{c.vinculados.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 21H21V19H20V4C20 3.45 19.55 3 19 3H5C4.45 3 4 3.45 4 4V19H3V21ZM6 5H18V19H6V5Z" stroke="currentColor" strokeWidth="2"/>
+                    <rect x="8" y="7" width="2" height="2" fill="currentColor"/>
+                    <rect x="14" y="7" width="2" height="2" fill="currentColor"/>
+                    <rect x="8" y="11" width="2" height="2" fill="currentColor"/>
+                    <rect x="14" y="11" width="2" height="2" fill="currentColor"/>
+                    <rect x="11" y="15" width="2" height="4" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div className="empty-text">Nenhuma empresa encontrada</div>
+                <div className="empty-subtext">Tente ajustar os filtros ou cadastrar uma nova empresa</div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <aside>
-        <div className="clients-card">
-          <h3 className="form-card__title">Cadastrados</h3>
-          <div className="clients-filter">
-            <input className="control" placeholder="Nome/CNPJ" value={q} onChange={e=>setQ(e.target.value)} />
-          </div>
-          <div className="clients-table">
-            <div className="clients-thead">
-              <div>Empresa</div>
-              <div>CNPJ</div>
-            </div>
-            <div>
-              {filtered.map(c => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className="client-row client-row--button"
-                  onClick={()=>{setSelected(c); setDetailsOpen(true);}}
-                >
-                  <div className="client-main">
-                    <img className="client-avatar" src="https://cdn-icons-png.flaticon.com/128/1040/1040238.png" alt="" />
-                    <div>
-                      <div className="client-name">{c.nome_empresa}</div>
-                      <div className="client-phone">{c.email || c.telefone || '—'}</div>
-                    </div>
-                  </div>
-                  <div className="client-dates">{c.cnpj}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </aside>
-
       <CompanyDetailsModal
         open={detailsOpen}
-        onClose={()=>setDetailsOpen(false)}
+        onClose={() => setDetailsOpen(false)}
         company={selected}
+      />
+
+      <CompanyRegistrationModal
+        open={registrationOpen}
+        onClose={() => setRegistrationOpen(false)}
+        onSuccess={(newCompany) => {
+          setCompanies([newCompany, ...companies]);
+          setRegistrationOpen(false);
+        }}
       />
     </div>
   );
