@@ -26,32 +26,81 @@ const Sidebar=forwardRef(function Sidebar({collapsed,page,onNavigate},ref){
   const menuRef=useRef(null);
 
   useEffect(()=>{
-    const el=menuRef.current; if(!el) return;
+    const el=menuRef.current; 
+    if(!el) return;
+    
     const isMobile=()=>window.matchMedia("(max-width:1024px)").matches;
 
     const updateState=()=>{
+      if (!el) return;
+      
       const overflowing=el.scrollWidth>el.clientWidth+1;
       el.classList.toggle("menu--overflowing",overflowing);
-      const atStart=el.scrollLeft<=2,atEnd=Math.ceil(el.scrollLeft+el.clientWidth)>=el.scrollWidth-2;
+      
+      const atStart=el.scrollLeft<=2;
+      const atEnd=Math.ceil(el.scrollLeft+el.clientWidth)>=el.scrollWidth-2;
+      
       el.classList.toggle("menu--fade-left",overflowing && !atStart);
       el.classList.toggle("menu--fade-right",overflowing && !atEnd);
-      if(!overflowing && el.scrollLeft!==0) el.scrollTo({left:0,behavior:"instant"});
+      
+      // Reseta scroll se não está overflowing
+      if(!overflowing && el.scrollLeft!==0) {
+        el.scrollTo({left:0,behavior:"smooth"});
+      }
     };
-    updateState();
 
+    // Delay inicial para garantir que o DOM esteja renderizado
+    setTimeout(updateState, 100);
+    
     const onScroll=()=>updateState();
     el.addEventListener("scroll",onScroll,{passive:true});
 
-    const onWheel=(e)=>{ if(!isMobile())return; if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ el.scrollLeft+=e.deltaY; e.preventDefault(); } };
+    const onWheel=(e)=>{ 
+      if(!isMobile()) return; 
+      if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){ 
+        el.scrollLeft+=e.deltaY; 
+        e.preventDefault(); 
+      } 
+    };
 
+    // Eventos de mouse para arrastar
     let mDown=false,mStartX=0,mStartL=0;
-    const md=(e)=>{ if(!isMobile())return; mDown=true;mStartX=e.pageX;mStartL=el.scrollLeft;el.style.cursor="grabbing";e.preventDefault(); };
-    const mm=(e)=>{ if(!mDown)return; el.scrollLeft=mStartL-(e.pageX-mStartX); };
-    const mu=()=>{ mDown=false; el.style.cursor=""; };
+    const md=(e)=>{ 
+      if(!isMobile()) return; 
+      mDown=true;
+      mStartX=e.pageX;
+      mStartL=el.scrollLeft;
+      el.style.cursor="grabbing";
+      e.preventDefault(); 
+    };
+    
+    const mm=(e)=>{ 
+      if(!mDown) return; 
+      el.scrollLeft=mStartL-(e.pageX-mStartX); 
+    };
+    
+    const mu=()=>{ 
+      mDown=false; 
+      el.style.cursor=""; 
+    };
 
+    // Eventos de touch para mobile
     let tDown=false,tStartX=0,tStartL=0;
-    const ts=(e)=>{ if(!isMobile())return; const t=e.touches[0]; tDown=true;tStartX=t.clientX;tStartL=el.scrollLeft; };
-    const tm=(e)=>{ if(!tDown)return; const t=e.touches[0]; el.scrollLeft=tStartL-(t.clientX-tStartX); e.preventDefault(); };
+    const ts=(e)=>{ 
+      if(!isMobile()) return; 
+      const t=e.touches[0]; 
+      tDown=true;
+      tStartX=t.clientX;
+      tStartL=el.scrollLeft; 
+    };
+    
+    const tm=(e)=>{ 
+      if(!tDown) return; 
+      const t=e.touches[0]; 
+      el.scrollLeft=tStartL-(t.clientX-tStartX); 
+      e.preventDefault(); 
+    };
+    
     const te=()=>{ tDown=false; };
 
     el.addEventListener("wheel",onWheel,{passive:false});
@@ -60,15 +109,31 @@ const Sidebar=forwardRef(function Sidebar({collapsed,page,onNavigate},ref){
     window.addEventListener("mouseup",mu);
     el.addEventListener("touchstart",ts,{passive:true});
     el.addEventListener("touchmove",tm,{passive:false});
-    el.addEventListener("touchend",te); el.addEventListener("touchcancel",te);
+    el.addEventListener("touchend",te); 
+    el.addEventListener("touchcancel",te);
 
-    const ro=new ResizeObserver(updateState); ro.observe(el);
-    const mo=new MutationObserver(updateState); mo.observe(el,{childList:true,subtree:true});
+    const ro=new ResizeObserver(updateState); 
+    ro.observe(el);
+    
+    const mo=new MutationObserver(updateState); 
+    mo.observe(el,{childList:true,subtree:true});
 
-    return()=>{ el.removeEventListener("scroll",onScroll); el.removeEventListener("wheel",onWheel);
-      el.removeEventListener("mousedown",md); window.removeEventListener("mousemove",mm); window.removeEventListener("mouseup",mu);
-      el.removeEventListener("touchstart",ts); el.removeEventListener("touchmove",tm); el.removeEventListener("touchend",te); el.removeEventListener("touchcancel",te);
-      ro.disconnect(); mo.disconnect();
+    // Atualiza também quando a janela redimensiona
+    window.addEventListener('resize', updateState);
+
+    return()=>{ 
+      el.removeEventListener("scroll",onScroll); 
+      el.removeEventListener("wheel",onWheel);
+      el.removeEventListener("mousedown",md); 
+      window.removeEventListener("mousemove",mm); 
+      window.removeEventListener("mouseup",mu);
+      el.removeEventListener("touchstart",ts); 
+      el.removeEventListener("touchmove",tm); 
+      el.removeEventListener("touchend",te); 
+      el.removeEventListener("touchcancel",te);
+      window.removeEventListener('resize', updateState);
+      ro.disconnect(); 
+      mo.disconnect();
     };
   },[]);
 
@@ -91,4 +156,5 @@ const Sidebar=forwardRef(function Sidebar({collapsed,page,onNavigate},ref){
     </aside>
   );
 });
+
 export default Sidebar;
