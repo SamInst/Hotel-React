@@ -1,5 +1,7 @@
+// src/pages/OvernightModal.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './OvernightModal.css';
+import DateRangePicker from '../components/DateRangePicker'; // usa o calendário existente
 
 /* ===================== Helpers de data/tempo ===================== */
 const pad = (n) => n.toString().padStart(2, '0');
@@ -133,89 +135,6 @@ const useOutsideClose = (open, onClose) => {
   return ref;
 };
 
-/* ===================== Modern Date Picker ===================== */
-const getMonthMatrix = (year, month /* 0-11 */) => {
-  const first = new Date(year, month, 1);
-  const firstWeekday = (first.getDay() + 6) % 7; // dom(0)->6; seg(1)->0
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells = [];
-  for (let i = 0; i < firstWeekday; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
-  while (cells.length % 7 !== 0) cells.push(null);
-  return cells;
-};
-
-const ModernDatePicker = ({ valueISO, onChangeISO, minISO }) => {
-  const initial = valueISO ? parseDateFlexible(valueISO) : new Date();
-  const [open, setOpen] = useState(false);
-  const [viewYear, setViewYear] = useState(initial.getFullYear());
-  const [viewMonth, setViewMonth] = useState(initial.getMonth());
-  const popRef = useOutsideClose(open, () => setOpen(false));
-
-  const cells = useMemo(() => getMonthMatrix(viewYear, viewMonth), [viewYear, viewMonth]);
-  const selected = valueISO ? parseDateFlexible(valueISO) : null;
-  const minDate  = minISO ? parseDateFlexible(minISO) : null;
-
-  const goPrev = () => setViewMonth((m) => (m === 0 ? (setViewYear((y)=>y-1), 11) : m-1));
-  const goNext = () => setViewMonth((m) => (m === 11 ? (setViewYear((y)=>y+1), 0) : m+1));
-
-  const handlePick = (d) => {
-    if (!d) return;
-    if (minDate) {
-      const md = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
-      if (d < md) return;
-    }
-    onChangeISO(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
-    setOpen(false);
-  };
-
-  const weekLabels = ['S','T','Q','Q','S','S','D'];
-  const monthLabels = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-  return (
-    <div className="mdp-wrapper">
-      <button type="button" className="mdp-input" onClick={() => setOpen(v=>!v)} aria-label="Abrir calendário">
-        {valueISO ? toBRFromISO(valueISO) : 'dd/MM/yyyy'}
-        <span className="mdp-icon">📅</span>
-      </button>
-
-      {open && (
-        <div className="mdp-popover" ref={popRef}>
-          <div className="mdp-header">
-            <button className="mdp-nav" onClick={goPrev}>&lt;</button>
-            <div className="mdp-title">{monthLabels[viewMonth]} {viewYear}</div>
-            <button className="mdp-nav" onClick={goNext}>&gt;</button>
-          </div>
-
-          <div className="mdp-week">
-            {weekLabels.map((w) => <div key={w} className="mdp-weekcell">{w}</div>)}
-          </div>
-
-          <div className="mdp-grid">
-            {cells.map((d, i) => {
-              const isDisabled = d && minDate && d < new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
-              const isSelected = selected && d &&
-                d.getFullYear()===selected.getFullYear() &&
-                d.getMonth()===selected.getMonth() &&
-                d.getDate()===selected.getDate();
-              return (
-                <button
-                  key={i}
-                  className={`mdp-cell ${!d?'empty':''} ${isSelected?'selected':''}`}
-                  disabled={!d || isDisabled}
-                  onClick={() => handlePick(d)}
-                >
-                  {d ? d.getDate() : ''}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 /* ===================== Modern Time Picker (24h) ===================== */
 const ModernTimePicker = ({ value = '13:00', onChange }) => {
   const [open, setOpen] = useState(false);
@@ -252,61 +171,6 @@ const ModernTimePicker = ({ value = '13:00', onChange }) => {
             </div>
           </div>
           <div className="mtp-footer">Formato 24h • Esc para fechar</div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-/* ===================== Modern ComboBox (diárias) ===================== */
-const ModernComboBox = ({ value, onChange, options = [], placeholder = 'Selecione...' }) => {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const selectedOpt = options.find(o => o.value === value);
-  const popRef = useOutsideClose(open, () => setOpen(false));
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter(o => o.label.toLowerCase().includes(q));
-  }, [options, query]);
-
-  return (
-    <div className="mcb-wrapper">
-      <button
-        type="button"
-        className={`mcb-input ${selectedOpt?.isCurrentRange ? 'current' : ''}`}
-        onClick={() => setOpen(v=>!v)}
-        aria-label="Abrir seleção de diárias"
-      >
-        <span className="mcb-text">{selectedOpt ? selectedOpt.label : placeholder}</span>
-        {selectedOpt?.isCurrentRange && <span className="mcb-badge">Atual</span>}
-        <span className="mcb-caret">▾</span>
-      </button>
-
-      {open && (
-        <div className="mcb-popover" ref={popRef}>
-          <input
-            autoFocus
-            className="mcb-search"
-            placeholder="Buscar diária..."
-            value={query}
-            onChange={(e)=>setQuery(e.target.value)}
-          />
-          <div className="mcb-list">
-            {filtered.length === 0 && <div className="mcb-empty">Nenhuma opção</div>}
-            {filtered.map(opt => (
-              <button
-                key={opt.value}
-                className={`mcb-option ${opt.value===value?'selected':''} ${opt.isCurrentRange?'current':''}`}
-                onClick={() => { onChange(opt.value); setOpen(false); setQuery(''); }}
-                title={opt.isCurrentRange ? 'Diária atual (agora)' : 'Selecionar'}
-              >
-                <span>{opt.label}</span>
-                {opt.isCurrentRange && <span className="mcb-badge">Atual</span>}
-              </button>
-            ))}
-          </div>
         </div>
       )}
     </div>
@@ -1074,20 +938,12 @@ const AddDailyModal = ({ isOpen, onClose, currentRoom, currentGuests, checkoutDa
               </div>
 
               <div className="form-field">
-                <label>Data de Início</label>
-                <ModernDatePicker
-                  valueISO={newDaily.startDate}
-                  onChangeISO={(date) => setNewDaily(prev => ({ ...prev, startDate: date }))}
-                  minISO={toISOFromBR(addDaysBR(checkoutDate, 1))}
-                />
-              </div>
-
-              <div className="form-field">
-                <label>Data de Fim</label>
-                <ModernDatePicker
-                  valueISO={newDaily.endDate}
-                  onChangeISO={(date) => setNewDaily(prev => ({ ...prev, endDate: date }))}
-                  minISO={newDaily.startDate}
+                <label>Período</label>
+                <DateRangePicker
+                  startDate={newDaily.startDate}
+                  endDate={newDaily.endDate}
+                  onDateChange={(start, end) => setNewDaily(prev => ({ ...prev, startDate: start, endDate: end }))}
+                  placeholder="Selecionar período"
                 />
               </div>
             </div>
@@ -1328,13 +1184,14 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
 
   if (!isOpen) return null;
 
-  const handleCheckinChange = (iso) => {
-    setEditData((prev) => {
-      const clamp = prev.checkout && parseDateFlexible(prev.checkout) < parseDateFlexible(iso);
-      return { ...prev, checkin: iso, checkout: clamp ? iso : prev.checkout };
-    });
+  const handleRangeChange = (startISO, endISO) => {
+    setEditData((prev) => ({
+      ...prev,
+      checkin: startISO || prev.checkin || todayISO(),
+      checkout: endISO || startISO || prev.checkout
+    }));
   };
-  const handleCheckoutChange = (iso) => setEditData((p) => ({ ...p, checkout: iso }));
+
   const handleEditSave = () => { setIsEditing(false); console.log('Salvar', editData); };
 
   const currentDaily = generatedDailies[selectedDaily];
@@ -1343,9 +1200,9 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
   const totalPernoite = generatedDailies.reduce((sum, daily) => sum + daily.totalValue, 0);
   const totalPaid = modalData.payments.reduce((s, p) => s + p.value, 0);
   const totalDue = currentDaily ? (currentDaily.totalValue ?? 0) : 0;
-  const totalPending = Math.max(0, totalDue - totalPaid);
   const totalPernoitePending = Math.max(0, totalPernoite - totalPaid);
   const paidPercent = totalDue ? Math.min(100, Math.max(0, (totalPaid / totalDue) * 100)) : 0;
+  const overallPaidPercent = totalPernoite ? Math.min(100, Math.max(0, (totalPaid / totalPernoite) * 100)) : 0;
 
   const dailyOptions = generatedDailies.map((d, i) => {
     const label = `${i + 1} - [${d.date} ${d.startTime}] → [${d.endDate} ${d.endTime}]`;
@@ -1410,18 +1267,19 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
 
                     <div className="data-grid">
                       <div className="data-row">
-                    
-
-                        <div className="data-item">
-                          <label>Checkout:</label>
+                        <div className="data-item wide">
+                          <label>Período:</label>
                           {isEditing ? (
-                            <ModernDatePicker
-                              valueISO={editData.checkout}
-                              onChangeISO={handleCheckoutChange}
-                              minISO={editData.checkin || todayISO()}
+                            <DateRangePicker
+                              startDate={editData.checkin}
+                              endDate={editData.checkout}
+                              onDateChange={handleRangeChange}
+                              placeholder="Selecionar período"
                             />
                           ) : (
-                            <span>{formatDateForDisplay(modalData.checkout)}</span>
+                            <span>
+                              {formatDateForDisplay(modalData.checkin)} — {formatDateForDisplay(modalData.checkout)}
+                            </span>
                           )}
                         </div>
 
@@ -1471,7 +1329,7 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
                     )}
                   </section>
 
-                  {/* Dashboard de Valores */}
+                  {/* Dashboard de Valores + Progresso Geral */}
                   <section className="dashboard-section">
                     <h3>Resumo Financeiro</h3>
                     <div className="dashboard-grid">
@@ -1486,6 +1344,17 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
                       <div className="dashboard-card pending">
                         <div className="dashboard-title">Falta Pagar</div>
                         <div className="dashboard-value">R$ {totalPernoitePending.toFixed(2)}</div>
+                      </div>
+                    </div>
+
+                    {/* ← NOVO: Barra de progresso do pernoite inteiro */}
+                    <div className="payment-progress overview-progress">
+                      <div className="payment-progress-track">
+                        <div className="payment-progress-bar" style={{ width: `${overallPaidPercent}%` }} />
+                      </div>
+                      <div className="payment-progress-labels">
+                        <span className="pct">{overallPaidPercent.toFixed(0)}%</span>
+                        <span className="total">Total: R$ {totalPernoite.toFixed(2)}</span>
                       </div>
                     </div>
                   </section>
@@ -1596,7 +1465,7 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
                             </div>
                             <div className="summary-card pending">
                               <div className="summary-title">Falta pagar</div>
-                              <div className="summary-value">R$ {totalPending.toFixed(2)}</div>
+                              <div className="summary-value">R$ {Math.max(0, (currentDaily.totalValue ?? 0) - totalPaid).toFixed(2)}</div>
                             </div>
                           </div>
 
@@ -1606,7 +1475,7 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
                             </div>
                             <div className="payment-progress-labels">
                               <span className="pct">{paidPercent.toFixed(0)}%</span>
-                              <span className="total">Total: R$ {totalDue.toFixed(2)}</span>
+                              <span className="total">Total: R$ {currentDaily.totalValue.toFixed(2)}</span>
                             </div>
                           </div>
                         </div>
@@ -1741,6 +1610,61 @@ const OvernightModal = ({ isOpen, onClose, overnightData, onCancel, onFinalize }
           setShowChangeRoomModal(false);
         }}
       />}
+    </div>
+  );
+};
+
+/* ===================== Modern ComboBox (diárias) ===================== */
+const ModernComboBox = ({ value, onChange, options = [], placeholder = 'Selecione...' }) => {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selectedOpt = options.find(o => o.value === value);
+  const popRef = useOutsideClose(open, () => setOpen(false));
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter(o => o.label.toLowerCase().includes(q));
+  }, [options, query]);
+
+  return (
+    <div className="mcb-wrapper">
+      <button
+        type="button"
+        className={`mcb-input ${selectedOpt?.isCurrentRange ? 'current' : ''}`}
+        onClick={() => setOpen(v=>!v)}
+        aria-label="Abrir seleção de diárias"
+      >
+        <span className="mcb-text">{selectedOpt ? selectedOpt.label : placeholder}</span>
+        {selectedOpt?.isCurrentRange && <span className="mcb-badge">Atual</span>}
+        <span className="mcb-caret">▾</span>
+      </button>
+
+      {open && (
+        <div className="mcb-popover" ref={popRef}>
+          <input
+            autoFocus
+            className="mcb-search"
+            placeholder="Buscar diária..."
+            value={query}
+            onChange={(e)=>setQuery(e.target.value)}
+          />
+          <div className="mcb-list">
+            {filtered.length === 0 && <div className="mcb-empty">Nenhuma opção</div>}
+            {filtered.map(opt => (
+              <button
+                key={opt.value}
+                className={`mcb-option ${opt.value===value?'selected':''} ${opt.isCurrentRange?'current':''}`}
+                onClick={() => { onChange(opt.value); setOpen(false); setQuery(''); }}
+                title={opt.isCurrentRange ? 'Diária atual (agora)' : 'Selecionar'}
+              >
+                <span>{opt.label}</span>
+                {opt.isCurrentRange && <span className="mcb-badge">Atual</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
