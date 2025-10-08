@@ -1,10 +1,10 @@
 import { useUIFeedback } from "./uiUtilities.jsx";
 import { useCallback } from "react";
 
-// ✅ Base correta conforme o backend: http://localhost:8080/pernoite
+// ✅ Base conforme backend
 const BASE_URL = "http://localhost:8080";
 
-// Função utilitária genérica para chamadas API
+// --- Função genérica de chamadas API ---
 const apiCall = async (url, options = {}) => {
   const response = await fetch(`${BASE_URL}${url}`, {
     headers: {
@@ -24,23 +24,25 @@ const apiCall = async (url, options = {}) => {
 // --- API de pernoites ---
 const pernoiteApi = {
   listar: async (status = null) => {
-    // ✅ O endpoint correto no seu backend é /pernoite (GET)
     const url = status ? `/pernoite?status=${status}` : `/pernoite`;
     return apiCall(url);
   },
 
+  buscarPorId: async (id) => {
+    // ✅ GET /pernoite/{id}/detalhes
+    return apiCall(`/pernoite/${id}/detalhes`);
+  },
+
   cancelar: async (id) => {
-    // DELETE /pernoite/{id}
     return apiCall(`/pernoite/${id}`, { method: "DELETE" });
   },
 
   finalizar: async (id) => {
-    // PUT /pernoite/{id}/finalizar — crie se precisar
     return apiCall(`/pernoite/${id}/finalizar`, { method: "PUT" });
   },
 };
 
-// --- Hook React para operações com feedback visual ---
+// --- Hook React com feedback visual ---
 export const usePernoiteOperations = () => {
   const uiFeedback = useUIFeedback();
 
@@ -51,6 +53,19 @@ export const usePernoiteOperations = () => {
         {
           loadingMessage: "Carregando pernoites...",
           errorPrefix: "Erro ao carregar pernoites",
+        }
+      );
+    },
+    [uiFeedback]
+  );
+
+  const carregarPernoitePorId = useCallback(
+    async (id) => {
+      return uiFeedback.executeWithFeedback(
+        () => pernoiteApi.buscarPorId(id),
+        {
+          loadingMessage: "Carregando detalhes do pernoite...",
+          errorPrefix: "Erro ao carregar detalhes do pernoite",
         }
       );
     },
@@ -82,6 +97,7 @@ export const usePernoiteOperations = () => {
   return {
     ...uiFeedback,
     carregarPernoites,
+    carregarPernoitePorId,
     cancelarPernoite,
     finalizarPernoite,
   };

@@ -1,7 +1,8 @@
 // src/pages/OvernightModal.jsx
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './OvernightModal.css';
-import DateRangePicker from '../components/DateRangePicker'; // usa o calendário existente
+import DateRangePicker from '../components/DateRangePicker';
+import { usePernoiteOperations } from '../config/pernoiteApi';
 
 /* ===================== Helpers de data/tempo ===================== */
 const pad = (n) => n.toString().padStart(2, '0');
