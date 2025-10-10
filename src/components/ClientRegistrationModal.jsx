@@ -113,23 +113,32 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
 
   return (
     <div className="modal-overlay" onClick={handleClose}>
-      <div className="modal-container" onClick={e => e.stopPropagation()}>
+      <div className="modal-content client-registration-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Cadastrar Novo Cliente</h2>
-          <button className="modal-close" onClick={handleClose}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+          <div className="modal-title">
+            <span className="client-icon">👤</span>
+            <span>Cadastrar Novo Cliente</span>
+          </div>
+          <button className="close-btn" onClick={handleClose}>✕</button>
         </div>
 
-        <form onSubmit={submit} className="modal-content">
+        <form onSubmit={submit} className="modal-body">
           <div className="form-section">
-            <h3 className="form-section-title">Dados Pessoais</h3>
+            <h3>Dados Pessoais</h3>
             
             <div className="form-grid">
               <div className="avatar-field col-2">
-                <div className="avatar-circle" />
+                <div className="avatar-preview">
+                  <div className="avatar-circle">
+                    {form.nome ? (
+                      <div className="avatar-initials">
+                        {form.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                      </div>
+                    ) : (
+                      <span className="avatar-placeholder">👤</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="field col-4">
@@ -138,6 +147,7 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                   className="field-input" 
                   value={form.nome} 
                   onChange={e=>setField('nome', e.target.value)}
+                  placeholder="Digite o nome completo"
                   required
                 />
               </div>
@@ -148,6 +158,7 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                   className="field-input" 
                   value={form.cpf} 
                   onChange={e=>setField('cpf', e.target.value)}
+                  placeholder="000.000.000-00"
                   required
                 />
               </div>
@@ -157,7 +168,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.rg} 
-                  onChange={e=>setField('rg', e.target.value)} 
+                  onChange={e=>setField('rg', e.target.value)}
+                  placeholder="Número do RG" 
                 />
               </div>
 
@@ -167,7 +179,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                   className="field-input" 
                   type="email" 
                   value={form.email} 
-                  onChange={e=>setField('email', e.target.value)} 
+                  onChange={e=>setField('email', e.target.value)}
+                  placeholder="email@exemplo.com" 
                 />
               </div>
 
@@ -197,14 +210,15 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.telefone} 
-                  onChange={e=>setField('telefone', e.target.value)} 
+                  onChange={e=>setField('telefone', e.target.value)}
+                  placeholder="(00) 0 0000-0000" 
                 />
               </div>
             </div>
           </div>
 
           <div className="form-section">
-            <h3 className="form-section-title">Endereço</h3>
+            <h3>Endereço</h3>
             
             <div className="form-grid">
               <div className="field col-3">
@@ -212,7 +226,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.cep} 
-                  onChange={e=>setField('cep', e.target.value)} 
+                  onChange={e=>setField('cep', e.target.value)}
+                  placeholder="00000-000" 
                 />
               </div>
 
@@ -221,7 +236,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.endereco} 
-                  onChange={e=>setField('endereco', e.target.value)} 
+                  onChange={e=>setField('endereco', e.target.value)}
+                  placeholder="Rua, Avenida, etc." 
                 />
               </div>
 
@@ -230,7 +246,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.complemento} 
-                  onChange={e=>setField('complemento', e.target.value)} 
+                  onChange={e=>setField('complemento', e.target.value)}
+                  placeholder="Apartamento, Bloco, etc." 
                 />
               </div>
 
@@ -239,7 +256,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.bairro} 
-                  onChange={e=>setField('bairro', e.target.value)} 
+                  onChange={e=>setField('bairro', e.target.value)}
+                  placeholder="Nome do bairro" 
                 />
               </div>
 
@@ -248,7 +266,8 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
                 <input 
                   className="field-input" 
                   value={form.numero} 
-                  onChange={e=>setField('numero', e.target.value)} 
+                  onChange={e=>setField('numero', e.target.value)}
+                  placeholder="123" 
                 />
               </div>
 
@@ -276,10 +295,10 @@ export function ClientRegistrationModal({ open, onClose, onSuccess }) {
           </div>
 
           <div className="modal-footer">
-            <button type="button" className="btn btn--secondary" onClick={handleClose}>
+            <button type="button" className="cancel-btn" onClick={handleClose}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn--primary">
+            <button type="submit" className="save-btn">
               Cadastrar Cliente
             </button>
           </div>

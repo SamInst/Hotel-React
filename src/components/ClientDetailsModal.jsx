@@ -1,3 +1,4 @@
+// src/components/ClientDetailsModal.jsx
 import React, { useMemo, useRef, useState } from 'react';
 import { Modal } from './Modal.jsx';
 
@@ -61,121 +62,247 @@ export function ClientDetailsModal({ open, onClose, person }){
 
   return (
     <Modal open={open} onClose={onClose}>
-      <div className="client-details">
-        <section className="cd-card cd-head">
-          <div className="cd-avatar">
-            <img className="cd-avatar__img" src={person.avatar} alt="" />
-            <button type="button" className="cd-editbtn" onClick={onClose}>Editar Dados</button>
+      <div className="client-details-modal">
+        <div className="modal-header">
+          <div className="modal-title">
+            <span className="client-icon">👤</span>
+            <span>Detalhes do Cliente</span>
           </div>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
 
-          <div className="cd-head__info">
-            <h2 className="cd-name">{person.nome}</h2>
-
-            <div className="cd-kvgrid">
-              <div className="cd-kvcol">
-                <div className="kv"><strong>CPF:</strong><span>{person.cpf || '-'}</span></div>
-                <div className="kv"><strong>Telefone:</strong><span>{person.telefone || '-'}</span></div>
-                <div className="kv"><strong>Email:</strong><span>{person.email || '-'}</span></div>
+        <div className="modal-body">
+          <section className="client-section">
+            <div className="client-header">
+              <div className="client-avatar">
+                <img src={person.avatar} alt={person.nome} className="avatar-image" />
+                <button type="button" className="edit-button" onClick={onClose}>
+                  <span className="edit-icon">✏️</span>
+                  Editar Dados
+                </button>
               </div>
-              <div className="cd-kvcol">
-                <div className="kv"><strong>Nascimento:</strong><span>{fmtBR(person.data_nascimento)}{idade!=null ? ` (${idade} anos)` : ''}</span></div>
-                <div className="kv"><strong>RG:</strong><span>{person.rg || '-'}</span></div>
-                <div className="kv"><strong>Gênero:</strong><span>{sexoLabel}</span></div>
-              </div>
-            </div>
 
-            <div className="cd-lines">
-              <div className="kv"><strong>Nacionalidade:</strong><span>{person.nacionalidade ? `${person.nacionalidade.municipio}, ${person.nacionalidade.estado} , ${person.nacionalidade.pais}` : '-'}</span></div>
-              <div className="kv"><strong>Profissão:</strong><span>{person.profissao || '-'}</span></div>
-              <div className="kv"><strong>Estado Civil:</strong><span>{person.estado_civil || '-'}</span></div>
-            </div>
-          </div>
-        </section>
+              <div className="client-info">
+                <h2 className="client-name">{person.nome}</h2>
 
-        <section className="cd-card cd-split">
-          <div>
-            <h4>Endereço</h4>
-            <div className="kv"><strong>Logradouro:</strong><span>{person.endereco?.logradouro || '-'}</span></div>
-            <div className="kv"><strong>CEP:</strong><span>{person.endereco?.cep || '-'}</span><strong className="kv__sep">Número:</strong><span>{person.endereco?.numero || '-'}</span></div>
-            <div className="kv"><strong>Complemento:</strong><span>{person.endereco?.complemento || '-'}</span></div>
-            <div className="kv"><strong>Bairro:</strong><span>{person.endereco?.bairro || '-'}</span></div>
-            <div className="kv"><strong>País:</strong><span>{person.endereco?.pais || '-'}</span></div>
-            <div className="kv"><strong>Estado:</strong><span>{person.endereco?.estado || '-'}</span></div>
-            <div className="kv"><strong>Município:</strong><span>{person.endereco?.municipio || '-'}</span></div>
-          </div>
-
-          <div>
-            <h4>Empresa</h4>
-            <div className="kv"><strong>Nome/Razao:</strong><span>{person.empresa?.razao || '-'}</span></div>
-            <div className="kv"><strong>CNPJ:</strong><span>{person.empresa?.cnpj || '-'}</span></div>
-            <div className="kv"><strong>Telefone:</strong><span>{person.empresa?.telefone || '-'}</span></div>
-            <div className="kv"><strong>Email:</strong><span>{person.empresa?.email || '-'}</span></div>
-          </div>
-        </section>
-
-        <section className="cd-card cd-statusbar">
-          <div>Situacao: <span className="pill pill--ok">{person.situacao || 'Cadastrado'}</span></div>
-          <div>Cliente novo: <span className={person.cliente_novo ? 'pill pill--ok' : 'pill'}>{person.cliente_novo ? 'Sim' : 'Não'}</span></div>
-          <div>Hospedado: <span className={person.hospedado ? 'pill pill--ok' : 'pill pill--danger'}>{person.hospedado ? 'Sim' : 'Não'}</span></div>
-        </section>
-
-        <section className="cd-card cd-history">
-          <div className="cd-history__header">
-            <h3>Histórico de hospedagem</h3>
-            <div className="drange">
-              <button type="button" className="drange__icon" onClick={()=>startRef.current?.showPicker?.()}>📅</button>
-              <button type="button" className="drange__chip" onClick={()=>startRef.current?.showPicker?.()}>{fmtBR(start)}</button>
-              <button type="button" className="drange__chip" onClick={()=>endRef.current?.showPicker?.()}>{fmtBR(end)}</button>
-              <input ref={startRef} type="date" className="drange__input" value={start||''} onChange={e=>setStart(e.target.value)} />
-              <input ref={endRef} type="date" className="drange__input" value={end||''} onChange={e=>setEnd(e.target.value)} />
-            </div>
-          </div>
-
-          {groups.length === 0 && (
-            <div className="cd-history__empty">Nenhuma hospedagem no período.</div>
-          )}
-
-          {groups.map(group => (
-            <div key={group.label}>
-              <div className="cd-history__month">{group.label}</div>
-              {group.items.map(stay => (
-                <div key={`${stay.quarto}-${stay.inicio}`} className="stay-card">
-                  <div className="stay-card__head">
-                    <div className="stay-card__room">
-                      <div className="stay-card__roomtitle">{stay.quarto}</div>
-                      <div className="stay-card__guest">{stay.titular} - {stay.cpf}</div>
+                <div className="info-grid">
+                  <div className="info-column">
+                    <div className="info-item">
+                      <label>CPF:</label>
+                      <span>{person.cpf || '-'}</span>
                     </div>
-                    <div className="stay-card__range">{fmtBR(stay.inicio)} - {fmtBR(stay.fim)}</div>
+                    <div className="info-item">
+                      <label>Telefone:</label>
+                      <span>{person.telefone || '-'}</span>
+                    </div>
+                    <div className="info-item">
+                      <label>Email:</label>
+                      <span>{person.email || '-'}</span>
+                    </div>
                   </div>
-
-                  <div className="stay-card__body">
-                    {stay.blocos.map((b, idx) => (
-                      <div className={`stay-block ${idx < stay.blocos.length-1 ? 'stay-block--div' : ''}`} key={idx}>
-                        <div className="stay-block__left">
-                          <div className="stay-block__title">{b.titulo}</div>
-                          <div className="stay-block__guest">{stay.titular}</div>
-
-                          {b.itens.map((i, ii) => (
-                            <div className="stay-line" key={ii}>
-                              <div className="stay-line__title">{i.nome}</div>
-                              <div className="stay-line__meta">{i.data} {i.pagamento}</div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="stay-block__right">
-                          <div className="stay-block__total">Total: {money(b.total)}</div>
-                          <div className="stay-block__values">
-                            {b.itens.map((i,ii)=><div key={ii}>{money(i.valor)}</div>)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="info-column">
+                    <div className="info-item">
+                      <label>Nascimento:</label>
+                      <span>{fmtBR(person.data_nascimento)}{idade != null ? ` (${idade} anos)` : ''}</span>
+                    </div>
+                    <div className="info-item">
+                      <label>RG:</label>
+                      <span>{person.rg || '-'}</span>
+                    </div>
+                    <div className="info-item">
+                      <label>Gênero:</label>
+                      <span>{sexoLabel}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
+
+                <div className="info-full">
+                  <div className="info-item">
+                    <label>Nacionalidade:</label>
+                    <span>{person.nacionalidade ? `${person.nacionalidade.municipio}, ${person.nacionalidade.estado}, ${person.nacionalidade.pais}` : '-'}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Profissão:</label>
+                    <span>{person.profissao || '-'}</span>
+                  </div>
+                  <div className="info-item">
+                    <label>Estado Civil:</label>
+                    <span>{person.estado_civil || '-'}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
-        </section>
+          </section>
+
+          <section className="client-section">
+            <div className="section-grid">
+              <div className="section-column">
+                <h3 className="section-title">Endereço</h3>
+                <div className="info-item">
+                  <label>Logradouro:</label>
+                  <span>{person.endereco?.logradouro || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>CEP:</label>
+                  <span>{person.endereco?.cep || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Número:</label>
+                  <span>{person.endereco?.numero || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Complemento:</label>
+                  <span>{person.endereco?.complemento || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Bairro:</label>
+                  <span>{person.endereco?.bairro || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>País:</label>
+                  <span>{person.endereco?.pais || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Estado:</label>
+                  <span>{person.endereco?.estado || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Município:</label>
+                  <span>{person.endereco?.municipio || '-'}</span>
+                </div>
+              </div>
+
+              <div className="section-column">
+                <h3 className="section-title">Empresa</h3>
+                <div className="info-item">
+                  <label>Nome/Razão:</label>
+                  <span>{person.empresa?.razao || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>CNPJ:</label>
+                  <span>{person.empresa?.cnpj || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Telefone:</label>
+                  <span>{person.empresa?.telefone || '-'}</span>
+                </div>
+                <div className="info-item">
+                  <label>Email:</label>
+                  <span>{person.empresa?.email || '-'}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="client-section">
+            <div className="status-grid">
+              <div className="status-item">
+                <label>Situação:</label>
+                <span className="status-tag active">{person.situacao || 'Cadastrado'}</span>
+              </div>
+              <div className="status-item">
+                <label>Cliente novo:</label>
+                <span className={`status-tag ${person.cliente_novo ? 'active' : 'inactive'}`}>
+                  {person.cliente_novo ? 'Sim' : 'Não'}
+                </span>
+              </div>
+              <div className="status-item">
+                <label>Hospedado:</label>
+                <span className={`status-tag ${person.hospedado ? 'active' : 'inactive'}`}>
+                  {person.hospedado ? 'Sim' : 'Não'}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <section className="client-section">
+            <div className="section-header">
+              <h3 className="section-title">Histórico de Hospedagem</h3>
+              <div className="date-range">
+                <button 
+                  type="button" 
+                  className="date-button" 
+                  onClick={() => startRef.current?.showPicker?.()}
+                >
+                  <span className="date-icon">📅</span>
+                  {fmtBR(start) || 'Data inicial'}
+                </button>
+                <span className="date-separator">até</span>
+                <button 
+                  type="button" 
+                  className="date-button" 
+                  onClick={() => endRef.current?.showPicker?.()}
+                >
+                  <span className="date-icon">📅</span>
+                  {fmtBR(end) || 'Data final'}
+                </button>
+                <input ref={startRef} type="date" className="date-input" value={start||''} onChange={e=>setStart(e.target.value)} />
+                <input ref={endRef} type="date" className="date-input" value={end||''} onChange={e=>setEnd(e.target.value)} />
+              </div>
+            </div>
+
+            {groups.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">🏨</div>
+                <p>Nenhuma hospedagem no período selecionado.</p>
+              </div>
+            )}
+
+            {groups.map(group => (
+              <div key={group.label} className="history-group">
+                <div className="group-header">{group.label}</div>
+                {group.items.map(stay => (
+                  <div key={`${stay.quarto}-${stay.inicio}`} className="stay-card">
+                    <div className="stay-header">
+                      <div className="stay-info">
+                        <div className="stay-room">{stay.quarto}</div>
+                        <div className="stay-guest">{stay.titular} - {stay.cpf}</div>
+                      </div>
+                      <div className="stay-dates">
+                        {fmtBR(stay.inicio)} - {fmtBR(stay.fim)}
+                      </div>
+                    </div>
+
+                    <div className="stay-content">
+                      {stay.blocos.map((b, idx) => (
+                        <div className={`stay-block ${idx < stay.blocos.length-1 ? 'with-border' : ''}`} key={idx}>
+                          <div className="block-left">
+                            <div className="block-title">{b.titulo}</div>
+                            <div className="block-guest">{stay.titular}</div>
+
+                            {b.itens.map((i, ii) => (
+                              <div className="block-item" key={ii}>
+                                <div className="item-name">{i.nome}</div>
+                                <div className="item-meta">{i.data} • {i.pagamento}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="block-right">
+                            <div className="block-total">Total: {money(b.total)}</div>
+                            <div className="block-values">
+                              {b.itens.map((i, ii) => (
+                                <div key={ii} className="item-value">{money(i.valor)}</div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </section>
+        </div>
+
+        <div className="modal-footer">
+          <button className="cancel-btn" onClick={onClose}>
+            Fechar
+          </button>
+          <button className="save-btn" onClick={onClose}>
+            Editar Cliente
+          </button>
+        </div>
       </div>
     </Modal>
   );

@@ -28,7 +28,7 @@ export const INITIAL_ITEMS = [
       { data: '2025-02-20', qtd: 36, valorCompra: 2.45, valorVenda: 5.00 },
     ],
   },
-  { 
+  {
     id: 3,
     nome: 'Salgadinho FEST 130g',
     categoria: 'SALGADO',
