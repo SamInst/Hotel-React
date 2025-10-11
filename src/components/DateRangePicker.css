@@ -151,3 +151,57 @@
   .action-buttons { justify-content: stretch; }
   .clear-button, .apply-button { flex: 1; }
 }
+
+/* largura total do gatilho */
+.single-date-picker .date-input { width: 100%; }
+
+/* aparência de desabilitado nos dias bloqueados */
+.day.disabled {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* trigger com input e botão ícone */
+.single-date-picker .date-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.date-text-input {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+.date-text-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+.date-icon-btn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+/* cabeçalho com selects */
+.calendar-header .month-year {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.month-select, .year-input {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 14px;
+  background: #fff;
+  width: auto;
+}
+.year-input { width: 92px; }
+
+

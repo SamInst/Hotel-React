@@ -2,9 +2,13 @@
 import React, { useState, useEffect } from "react";
 import InputMask from "react-input-mask";
 import "./UserRegisterModal.css";
-import { buscarEnderecoPorCep, listarPaises, listarEstados, listarMunicipios } 
-from "../services/enderecoService";
-
+import {
+  buscarEnderecoPorCep,
+  listarPaises,
+  listarEstados,
+  listarMunicipios,
+} from "../services/enderecoService";
+import SingleDatePicker from "../components/SingleDatePicker.jsx";
 
 const UserRegisterModal = ({ user, onClose, onSave }) => {
   const [editing, setEditing] = useState(!user); // Se não tem user, está criando (editing = true)
@@ -33,8 +37,12 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
 
   // Carregar países/estados na abertura
   useEffect(() => {
-    listarPaises().then(setPaises).catch(() => setPaises([]));
-    listarEstados().then(setEstados).catch(() => setEstados([]));
+    listarPaises()
+      .then(setPaises)
+      .catch(() => setPaises([]));
+    listarEstados()
+      .then(setEstados)
+      .catch(() => setEstados([]));
   }, []);
 
   // Carregar dados do usuário se existir
@@ -65,7 +73,9 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
   // Atualiza lista de municípios conforme estado selecionado
   useEffect(() => {
     if (form.fk_estado) {
-      listarMunicipios(form.fk_estado).then(setMunicipios).catch(() => setMunicipios([]));
+      listarMunicipios(form.fk_estado)
+        .then(setMunicipios)
+        .catch(() => setMunicipios([]));
     }
   }, [form.fk_estado]);
 
@@ -129,19 +139,19 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
 
   const getPaisNome = (id) => {
     if (!id) return "—";
-    const pais = paises.find(p => String(p.id) === String(id));
+    const pais = paises.find((p) => String(p.id) === String(id));
     return pais?.nome || "—";
   };
 
   const getEstadoNome = (id) => {
     if (!id) return "—";
-    const estado = estados.find(e => String(e.id) === String(id));
+    const estado = estados.find((e) => String(e.id) === String(id));
     return estado?.nome || "—";
   };
 
   const getMunicipioNome = (id) => {
     if (!id) return "—";
-    const municipio = municipios.find(m => String(m.id) === String(id));
+    const municipio = municipios.find((m) => String(m.id) === String(id));
     return municipio?.nome || "—";
   };
 
@@ -165,12 +175,19 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{user ? (editing ? "Editar Pessoa" : "Detalhes da Pessoa") : "Cadastrar Pessoa"}</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
+          <h2>
+            {user
+              ? editing
+                ? "Editar Pessoa"
+                : "Dados Pessoais"
+              : "Cadastrar Pessoa"}
+          </h2>
+          <button className="close-btn" onClick={onClose}>
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-body">
-          <h3>Dados Pessoais</h3>
           <div className="form-grid grid-3">
             <div className="detail-item">
               <label>Nome Completo *</label>
@@ -189,15 +206,20 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             <div className="detail-item">
               <label>Data de Nascimento</label>
               {editing ? (
-                <input
-                  type="date"
+                <SingleDatePicker
                   value={form.data_nascimento}
-                  onChange={(e) => handleChange("data_nascimento", e.target.value)}
+                  onChange={(iso) => handleChange("data_nascimento", iso)}
+                  placeholder="—"
+                  maxDate={new Date()} // bloqueia datas futuras
+                  className="w-100"
                 />
               ) : (
-                <span className="detail-value">{formatDate(form.data_nascimento)}</span>
+                <span className="detail-value">
+                  {formatDate(form.data_nascimento)}
+                </span>
               )}
             </div>
+
             <div className="detail-item">
               <label>Sexo</label>
               {editing ? (
@@ -220,6 +242,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>CPF *</label>
               {editing ? (
                 <InputMask
+                  className="mask-input"
                   mask="999.999.999-99"
                   value={form.cpf}
                   onChange={(e) => handleChange("cpf", e.target.value)}
@@ -234,6 +257,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>RG</label>
               {editing ? (
                 <InputMask
+                  lassName="mask-input"
                   mask="99.999.999-9"
                   value={form.rg}
                   onChange={(e) => handleChange("rg", e.target.value)}
@@ -247,6 +271,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>Telefone</label>
               {editing ? (
                 <InputMask
+                  className="mask-input"
                   mask="(99) 99999-9999"
                   value={form.telefone}
                   onChange={(e) => handleChange("telefone", e.target.value)}
@@ -281,6 +306,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               {editing ? (
                 <div className="cep-field">
                   <InputMask
+                    className="mask-input"
                     mask="99999-999"
                     value={form.cep}
                     onChange={(e) => {
@@ -290,7 +316,9 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                     }}
                     placeholder="00000-000"
                   />
-                  {loadingCep && <small className="loading-text">Buscando CEP...</small>}
+                  {loadingCep && (
+                    <small className="loading-text">Buscando CEP...</small>
+                  )}
                 </div>
               ) : (
                 <span className="detail-value">{form.cep || "—"}</span>
@@ -364,11 +392,15 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 >
                   <option value="">Selecione</option>
                   {paises.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nome}</option>
+                    <option key={p.id} value={p.id}>
+                      {p.nome}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <span className="detail-value">{getPaisNome(form.fk_pais)}</span>
+                <span className="detail-value">
+                  {getPaisNome(form.fk_pais)}
+                </span>
               )}
             </div>
             <div className="detail-item">
@@ -380,11 +412,15 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 >
                   <option value="">Selecione</option>
                   {estados.map((e) => (
-                    <option key={e.id} value={e.id}>{e.nome}</option>
+                    <option key={e.id} value={e.id}>
+                      {e.nome}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <span className="detail-value">{getEstadoNome(form.fk_estado)}</span>
+                <span className="detail-value">
+                  {getEstadoNome(form.fk_estado)}
+                </span>
               )}
             </div>
             <div className="detail-item">
@@ -396,11 +432,15 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 >
                   <option value="">Selecione</option>
                   {municipios.map((m) => (
-                    <option key={m.id} value={m.id}>{m.nome}</option>
+                    <option key={m.id} value={m.id}>
+                      {m.nome}
+                    </option>
                   ))}
                 </select>
               ) : (
-                <span className="detail-value">{getMunicipioNome(form.fk_municipio)}</span>
+                <span className="detail-value">
+                  {getMunicipioNome(form.fk_municipio)}
+                </span>
               )}
             </div>
           </div>
@@ -408,7 +448,11 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
           <div className="modal-footer">
             {editing ? (
               <>
-                <button type="button" className="cancel-btn" onClick={handleCancel}>
+                <button
+                  type="button"
+                  className="cancel-btn"
+                  onClick={handleCancel}
+                >
                   Cancelar
                 </button>
                 <button type="submit" className="save-btn">
@@ -416,7 +460,11 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 </button>
               </>
             ) : (
-              <button type="button" className="save-btn" onClick={() => setEditing(true)}>
+              <button
+                type="button"
+                className="save-btn"
+                onClick={() => setEditing(true)}
+              >
                 Editar
               </button>
             )}
