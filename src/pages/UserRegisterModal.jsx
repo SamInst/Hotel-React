@@ -80,26 +80,73 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
   }, [form.fk_estado]);
 
   // Busca CEP
+  // Função utilitária para normalizar textos (remove acentos e deixa minúsculo)
+  const normalize = (str) =>
+    str
+      ?.normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim() || "";
+
+  // Debounce global para evitar múltiplas buscas seguidas
+  let cepTimeout = null;
+
   const handleBuscarCep = async (cep) => {
-    if (!cep || cep.length < 9) return;
-    try {
-      setLoadingCep(true);
-      const endereco = await buscarEnderecoPorCep(cep);
-      if (endereco) {
+    const cleanCep = cep.replace(/\D/g, "");
+    if (cleanCep.length !== 8) return; // só busca com 8 dígitos completos
+
+    if (cepTimeout) clearTimeout(cepTimeout);
+
+    cepTimeout = setTimeout(async () => {
+      try {
+        setLoadingCep(true);
+        const endereco = await buscarEnderecoPorCep(cleanCep);
+
+        if (!endereco) {
+          console.warn("CEP não encontrado ou inválido.");
+          return;
+        }
+
+        const ufSigla = endereco.uf;
+        const cidadeNome = endereco.localidade;
+
+        // Busca estados do país Brasil (id=1)
+        const estadosData = await listarEstados(1);
+
+        // Encontra estado pelo nome ou sigla
+        const estadoEncontrado = estadosData.find(
+          (e) =>
+            normalize(e.nome) === normalize(endereco.estado) ||
+            normalize(e.sigla || "") === normalize(ufSigla)
+        );
+
+        let municipioEncontrado = null;
+
+        // Busca municípios apenas se o estado foi encontrado
+        if (estadoEncontrado) {
+          const municipiosData = await listarMunicipios(estadoEncontrado.id);
+
+          municipioEncontrado = municipiosData.find(
+            (m) => normalize(m.nome) === normalize(cidadeNome)
+          );
+        }
+
+        // Atualiza o formulário com os dados do endereço
         setForm((prev) => ({
           ...prev,
           endereco: endereco.logradouro || "",
           bairro: endereco.bairro || "",
           complemento: endereco.complemento || "",
-          fk_estado: endereco.ufId || "",
-          fk_municipio: endereco.municipioId || "",
+          fk_pais: 1, // Brasil padrão
+          fk_estado: estadoEncontrado?.id || "",
+          fk_municipio: municipioEncontrado?.id || "",
         }));
+      } catch (err) {
+        console.error("Erro ao buscar CEP:", err);
+      } finally {
+        setLoadingCep(false);
       }
-    } catch (err) {
-      console.error("Erro ao buscar CEP:", err);
-    } finally {
-      setLoadingCep(false);
-    }
+    }, 500); // aguarda 500ms após o último dígito
   };
 
   const handleChange = (field, value) => {
@@ -312,7 +359,8 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                     onChange={(e) => {
                       const cep = e.target.value;
                       handleChange("cep", cep);
-                      if (cep.length === 9) handleBuscarCep(cep);
+                      if (cep.replace(/\D/g, "").length === 8)
+                        handleBuscarCep(cep);
                     }}
                     placeholder="00000-000"
                   />
@@ -324,6 +372,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 <span className="detail-value">{form.cep || "—"}</span>
               )}
             </div>
+
             <div className="detail-item">
               <label>Endereço</label>
               {editing ? (
