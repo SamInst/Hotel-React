@@ -205,3 +205,58 @@ h3 {
   gap: 8px;
 }
 
+/* Indicador de status do CNPJ */
+.cnpj-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cnpj-status--disponivel {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
+}
+
+.cnpj-status--cadastrado {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.cnpj-status .status-icon {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Tema escuro */
+@media (prefers-color-scheme: dark) {
+  .cnpj-status--disponivel {
+    background-color: #064e3b;
+    color: #6ee7b7;
+    border-color: #065f46;
+  }
+
+  .cnpj-status--cadastrado {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+    border-color: #991b1b;
+  }
+}

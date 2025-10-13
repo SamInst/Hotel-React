@@ -9,8 +9,19 @@ import {
   listarMunicipios,
 } from "../services/enderecoService";
 import SingleDatePicker from "../components/SingleDatePicker.jsx";
+import { useUIFeedback, LoadingOverlay, Toasts } from "../config/uiUtilities";
 
 const UserRegisterModal = ({ user, onClose, onSave }) => {
+  const {
+    loading,
+    loadingMessage,
+    executeWithFeedback,
+    toasts,
+    closeToast,
+    notifySuccess,
+    notifyError,
+  } = useUIFeedback();
+
   const [editing, setEditing] = useState(!user); // Se não tem user, está criando (editing = true)
   const [form, setForm] = useState({
     nome: "",
@@ -33,7 +44,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
   const [paises, setPaises] = useState([]);
   const [estados, setEstados] = useState([]);
   const [municipios, setMunicipios] = useState([]);
-  const [loadingCep, setLoadingCep] = useState(false);
+  const [cpfStatus, setCpfStatus] = useState(null); // null | 'disponivel' | 'cadastrado'
 
   // Carregar países/estados na abertura
   useEffect(() => {
@@ -79,7 +90,6 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     }
   }, [form.fk_estado]);
 
-  // Busca CEP
   // Função utilitária para normalizar textos (remove acentos e deixa minúsculo)
   const normalize = (str) =>
     str
@@ -98,59 +108,76 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     if (cepTimeout) clearTimeout(cepTimeout);
 
     cepTimeout = setTimeout(async () => {
-      try {
-        setLoadingCep(true);
-        const endereco = await buscarEnderecoPorCep(cleanCep);
+      await executeWithFeedback(
+        async () => {
+          const endereco = await buscarEnderecoPorCep(cleanCep);
+          if (!endereco) {
+            notifyError("CEP não encontrado.");
+            return;
+          }
 
-        if (!endereco) {
-          console.warn("CEP não encontrado ou inválido.");
-          return;
-        }
+          const ufSigla = endereco.uf;
+          const cidadeNome = endereco.localidade;
 
-        const ufSigla = endereco.uf;
-        const cidadeNome = endereco.localidade;
+          // Busca estados do país Brasil (id=1)
+          const estadosData = await listarEstados(1);
 
-        // Busca estados do país Brasil (id=1)
-        const estadosData = await listarEstados(1);
-
-        // Encontra estado pelo nome ou sigla
-        const estadoEncontrado = estadosData.find(
-          (e) =>
-            normalize(e.nome) === normalize(endereco.estado) ||
-            normalize(e.sigla || "") === normalize(ufSigla)
-        );
-
-        let municipioEncontrado = null;
-
-        // Busca municípios apenas se o estado foi encontrado
-        if (estadoEncontrado) {
-          const municipiosData = await listarMunicipios(estadoEncontrado.id);
-
-          municipioEncontrado = municipiosData.find(
-            (m) => normalize(m.nome) === normalize(cidadeNome)
+          // Encontra estado pelo nome ou sigla
+          const estadoEncontrado = estadosData.find(
+            (e) =>
+              normalize(e.nome) === normalize(endereco.estado) ||
+              normalize(e.sigla || "") === normalize(ufSigla)
           );
-        }
 
-        // Atualiza o formulário com os dados do endereço
-        setForm((prev) => ({
-          ...prev,
-          endereco: endereco.logradouro || "",
-          bairro: endereco.bairro || "",
-          complemento: endereco.complemento || "",
-          fk_pais: 1, // Brasil padrão
-          fk_estado: estadoEncontrado?.id || "",
-          fk_municipio: municipioEncontrado?.id || "",
-        }));
-      } catch (err) {
-        console.error("Erro ao buscar CEP:", err);
-      } finally {
-        setLoadingCep(false);
-      }
+          let municipioEncontrado = null;
+
+          // Busca municípios apenas se o estado foi encontrado
+          if (estadoEncontrado) {
+            const municipiosData = await listarMunicipios(estadoEncontrado.id);
+
+            municipioEncontrado = municipiosData.find(
+              (m) => normalize(m.nome) === normalize(cidadeNome)
+            );
+          }
+
+          // Atualiza o formulário com os dados do endereço
+          setForm((prev) => ({
+            ...prev,
+            endereco: endereco.logradouro || "",
+            bairro: endereco.bairro || "",
+            complemento: endereco.complemento || "",
+            fk_pais: 1, // Brasil padrão
+            fk_estado: estadoEncontrado?.id || "",
+            fk_municipio: municipioEncontrado?.id || "",
+          }));
+
+          if (estadoEncontrado && municipioEncontrado) {
+            notifySuccess("Endereço preenchido automaticamente!");
+          } else if (estadoEncontrado && !municipioEncontrado) {
+            notifyError(
+              `Estado encontrado, mas município não localizado (${cidadeNome}).`
+            );
+          } else {
+            notifyError(
+              "Não foi possível identificar o estado/município do CEP."
+            );
+          }
+        },
+        {
+          loadingMessage: "Buscando endereço...",
+          errorPrefix: "Erro ao buscar CEP",
+        }
+      );
     }, 500); // aguarda 500ms após o último dígito
   };
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+
+    // Limpa o status do CPF se o usuário modificar o campo
+    if (field === "cpf") {
+      setCpfStatus(null);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -218,6 +245,21 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     }
   };
 
+  // Mock de verificação de CPF - substituir pelo endpoint real
+  const verificarCpfCadastrado = async (cpf) => {
+    // Simula uma chamada à API
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    // Mock: considera alguns CPFs como já cadastrados
+    const cpfsCadastrados = [
+      "12345678909",
+      "98765432100",
+      "11122233344",
+    ];
+
+    return cpfsCadastrados.includes(cpf);
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
@@ -253,13 +295,14 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             <div className="detail-item">
               <label>Data de Nascimento</label>
               {editing ? (
-                <SingleDatePicker
-                  value={form.data_nascimento}
-                  onChange={(iso) => handleChange("data_nascimento", iso)}
-                  placeholder="—"
-                  maxDate={new Date()} // bloqueia datas futuras
-                  className="w-100"
-                />
+                <div style={{ width: '100%' }}>
+                  <SingleDatePicker
+                    value={form.data_nascimento}
+                    onChange={(iso) => handleChange("data_nascimento", iso)}
+                    placeholder="—"
+                    maxDate={new Date()} // bloqueia datas futuras
+                  />
+                </div>
               ) : (
                 <span className="detail-value">
                   {formatDate(form.data_nascimento)}
@@ -288,14 +331,57 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             <div className="detail-item">
               <label>CPF *</label>
               {editing ? (
-                <InputMask
-                  className="mask-input"
-                  mask="999.999.999-99"
-                  value={form.cpf}
-                  onChange={(e) => handleChange("cpf", e.target.value)}
-                  required
-                  placeholder="000.000.000-00"
-                />
+                <>
+                  <InputMask
+                    className="mask-input"
+                    mask="999.999.999-99"
+                    value={form.cpf}
+                    onChange={async (e) => {
+                      const cpfValue = e.target.value;
+                      handleChange("cpf", cpfValue);
+
+                      const clean = cpfValue.replace(/\D/g, "");
+                      if (clean.length === 11) {
+                        await executeWithFeedback(
+                          async () => {
+                            // Verifica se o CPF já está cadastrado
+                            const jaCadastrado = await verificarCpfCadastrado(clean);
+                            setCpfStatus(jaCadastrado ? "cadastrado" : "disponivel");
+
+                            if (jaCadastrado) {
+                              notifyError("Este CPF já está cadastrado no sistema!");
+                            } else {
+                              notifySuccess("CPF disponível para cadastro!");
+                            }
+                          },
+                          {
+                            loadingMessage: "Verificando CPF...",
+                            errorPrefix: "Erro na verificação",
+                          }
+                        );
+                      }
+                    }}
+                    required
+                    placeholder="000.000.000-00"
+                  />
+
+                  {/* Indicador de status do CPF */}
+                  {cpfStatus && (
+                    <div className={`cnpj-status cnpj-status--${cpfStatus}`}>
+                      {cpfStatus === "disponivel" ? (
+                        <>
+                          <span className="status-icon">✓</span>
+                          <span>CPF disponível para cadastro</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="status-icon">⚠</span>
+                          <span>CPF já cadastrado no sistema</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 <span className="detail-value">{form.cpf || "—"}</span>
               )}
@@ -304,7 +390,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>RG</label>
               {editing ? (
                 <InputMask
-                  lassName="mask-input"
+                  className="mask-input"
                   mask="99.999.999-9"
                   value={form.rg}
                   onChange={(e) => handleChange("rg", e.target.value)}
@@ -364,9 +450,6 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                     }}
                     placeholder="00000-000"
                   />
-                  {loadingCep && (
-                    <small className="loading-text">Buscando CEP...</small>
-                  )}
                 </div>
               ) : (
                 <span className="detail-value">{form.cep || "—"}</span>
@@ -519,6 +602,10 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             )}
           </div>
         </form>
+
+        {/* FEEDBACK VISUAL */}
+        <LoadingOverlay show={loading} label={loadingMessage} />
+        <Toasts toasts={toasts} onClose={closeToast} />
       </div>
     </div>
   );

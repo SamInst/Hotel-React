@@ -519,7 +519,7 @@ const UsersPage = () => {
   return (
     <div className="users-page">
       <div className="users-header">
-        <h1 className="users-title">Clientes</h1>
+        <h1 className="users-title">Cadastro de Hóspedes, Empresas e Veículos</h1>
         <div className="header-actions">
           <button className="add-button" onClick={() => openUserModal()}>
             <span className="add-icon">+</span> Cadastrar Hóspede

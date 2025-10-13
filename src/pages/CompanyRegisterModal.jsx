@@ -48,7 +48,7 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
   const [estados, setEstados] = useState([]);
   const [municipios, setMunicipios] = useState([]);
   const [pessoasDisponiveis, setPessoasDisponiveis] = useState([]);
-  const [loadingCep, setLoadingCep] = useState(false);
+  const [cnpjStatus, setCnpjStatus] = useState(null); // null | 'disponivel' | 'cadastrado'
 
   useEffect(() => {
     listarPaises()
@@ -102,7 +102,6 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
   }, []);
 
   // Função utilitária para normalizar textos (remove acentos e converte para minúsculas)
-  // Função utilitária para normalizar textos (remove acentos e deixa minúsculo)
   const normalize = (str) =>
     str
       ?.normalize("NFD")
@@ -120,73 +119,77 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
     if (cepTimeout) clearTimeout(cepTimeout);
 
     cepTimeout = setTimeout(async () => {
-      try {
-        setLoadingCep(true);
+      await executeWithFeedback(
+        async () => {
+          const endereco = await buscarEnderecoPorCep(cleanCep);
+          if (!endereco) {
+            notifyError("CEP não encontrado.");
+            return;
+          }
 
-        const endereco = await buscarEnderecoPorCep(cleanCep);
-        if (!endereco) {
-          notifyError("CEP não encontrado.");
-          return;
-        }
+          const ufSigla = endereco.uf;
+          const cidadeNome = endereco.localidade;
 
-        const ufSigla = endereco.uf;
-        const cidadeNome = endereco.localidade;
+          // Busca os estados do país Brasil (id=1)
+          const estadosData = await listarEstados(1);
 
-        // Busca os estados do país Brasil (id=1)
-        const estadosData = await listarEstados(1);
-
-        // Encontra o estado pelo nome ou sigla (ex: MG → Minas Gerais)
-        const estadoEncontrado = estadosData.find(
-          (e) =>
-            normalize(e.nome) === normalize(endereco.estado) ||
-            normalize(e.sigla || "") === normalize(ufSigla)
-        );
-
-        let municipioEncontrado = null;
-
-        // Busca municípios apenas se o estado foi encontrado
-        if (estadoEncontrado) {
-          const municipiosData = await listarMunicipios(estadoEncontrado.id);
-
-          // Encontra município pelo nome (ex: "Montes Claros")
-          municipioEncontrado = municipiosData.find(
-            (m) => normalize(m.nome) === normalize(cidadeNome)
+          // Encontra o estado pelo nome ou sigla (ex: MG → Minas Gerais)
+          const estadoEncontrado = estadosData.find(
+            (e) =>
+              normalize(e.nome) === normalize(endereco.estado) ||
+              normalize(e.sigla || "") === normalize(ufSigla)
           );
-        }
 
-        // Atualiza o formulário com os dados do endereço
-        setForm((prev) => ({
-          ...prev,
-          endereco: endereco.logradouro || "",
-          bairro: endereco.bairro || "",
-          complemento: endereco.complemento || "",
-          fk_pais: 1, // Brasil
-          fk_estado: estadoEncontrado?.id || "",
-          fk_municipio: municipioEncontrado?.id || "",
-        }));
+          let municipioEncontrado = null;
 
-        if (estadoEncontrado && municipioEncontrado) {
-          notifySuccess("Endereço preenchido automaticamente!");
-        } else if (estadoEncontrado && !municipioEncontrado) {
-          notifyError(
-            `Estado encontrado (${estadoEncontrado.descricao}), mas município não localizado (${cidadeNome}).`
-          );
-        } else {
-          notifyError(
-            "Não foi possível identificar o estado/município do CEP."
-          );
+          // Busca municípios apenas se o estado foi encontrado
+          if (estadoEncontrado) {
+            const municipiosData = await listarMunicipios(estadoEncontrado.id);
+
+            // Encontra município pelo nome (ex: "Montes Claros")
+            municipioEncontrado = municipiosData.find(
+              (m) => normalize(m.nome) === normalize(cidadeNome)
+            );
+          }
+
+          // Atualiza o formulário com os dados do endereço
+          setForm((prev) => ({
+            ...prev,
+            endereco: endereco.logradouro || "",
+            bairro: endereco.bairro || "",
+            complemento: endereco.complemento || "",
+            fk_pais: 1, // Brasil
+            fk_estado: estadoEncontrado?.id || "",
+            fk_municipio: municipioEncontrado?.id || "",
+          }));
+
+          if (estadoEncontrado && municipioEncontrado) {
+            notifySuccess("Endereço preenchido automaticamente!");
+          } else if (estadoEncontrado && !municipioEncontrado) {
+            notifyError(
+              `Estado encontrado (${estadoEncontrado.descricao}), mas município não localizado (${cidadeNome}).`
+            );
+          } else {
+            notifyError(
+              "Não foi possível identificar o estado/município do CEP."
+            );
+          }
+        },
+        {
+          loadingMessage: "Buscando endereço...",
+          errorPrefix: "Erro ao buscar CEP",
         }
-      } catch (err) {
-        console.error("Erro ao buscar CEP:", err);
-        notifyError("Erro ao consultar o CEP.");
-      } finally {
-        setLoadingCep(false);
-      }
+      );
     }, 500); // espera 500ms após parar de digitar
   };
 
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    
+    // Limpa o status do CNPJ se o usuário modificar o campo
+    if (field === "cnpj") {
+      setCnpjStatus(null);
+    }
   };
 
   const handleSubmit = (e) => {
@@ -244,6 +247,21 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
   const getStatusLabel = (ativa) =>
     ativa === "1" || ativa === 1 ? "Ativa" : "Inativa";
 
+  // Mock de verificação de CNPJ - substituir pelo endpoint real
+  const verificarCnpjCadastrado = async (cnpj) => {
+    // Simula uma chamada à API
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    // Mock: considera alguns CNPJs como já cadastrados
+    const cnpjsCadastrados = [
+      "11222333000181",
+      "12345678000195",
+      "98765432000199"
+    ];
+    
+    return cnpjsCadastrados.includes(cnpj);
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
@@ -300,51 +318,79 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
             <div className="detail-item">
               <label>CNPJ *</label>
               {editing ? (
-                <InputMask
-                  className="mask-input"
-                  mask="99.999.999/9999-99"
-                  value={form.cnpj}
-                  onChange={async (e) => {
-                    const cnpjValue = e.target.value;
-                    handleChange("cnpj", cnpjValue);
+                <>
+                  <InputMask
+                    className="mask-input"
+                    mask="99.999.999/9999-99"
+                    value={form.cnpj}
+                    onChange={async (e) => {
+                      const cnpjValue = e.target.value;
+                      handleChange("cnpj", cnpjValue);
 
-                    const clean = cnpjValue.replace(/\D/g, "");
-                    if (clean.length === 14) {
-                      await executeWithFeedback(
-                        async () => {
-                          const dados = await buscarCnpj(clean);
-                          if (dados) {
-                            // Preenche os dados básicos da empresa
-                            setForm((prev) => ({
-                              ...prev,
-                              ...dados,
-                            }));
+                      const clean = cnpjValue.replace(/\D/g, "");
+                      if (clean.length === 14) {
+                        await executeWithFeedback(
+                          async () => {
+                            // Verifica se o CNPJ já está cadastrado
+                            const jaCadastrado = await verificarCnpjCadastrado(clean);
+                            setCnpjStatus(jaCadastrado ? "cadastrado" : "disponivel");
 
-                            // Se o CNPJ retornou um CEP válido, reaproveita a busca do CEP
-                            if (
-                              dados.cep &&
-                              dados.cep.replace(/\D/g, "").length === 8
-                            ) {
-                              await handleBuscarCep(dados.cep);
+                            if (jaCadastrado) {
+                              notifyError("Este CNPJ já está cadastrado no sistema!");
+                              return;
                             }
 
-                            notifySuccess(
-                              "Dados da empresa preenchidos automaticamente!"
-                            );
-                          } else {
-                            notifyError("Não foi possível localizar o CNPJ.");
+                            const dados = await buscarCnpj(clean);
+                            if (dados) {
+                              // Preenche os dados básicos da empresa
+                              setForm((prev) => ({
+                                ...prev,
+                                ...dados,
+                              }));
+
+                              // Se o CNPJ retornou um CEP válido, reaproveita a busca do CEP
+                              if (
+                                dados.cep &&
+                                dados.cep.replace(/\D/g, "").length === 8
+                              ) {
+                                await handleBuscarCep(dados.cep);
+                              }
+
+                              notifySuccess(
+                                "Dados da empresa preenchidos automaticamente!"
+                              );
+                            } else {
+                              notifyError("Não foi possível localizar o CNPJ.");
+                            }
+                          },
+                          {
+                            loadingMessage: "Verificando CNPJ...",
+                            errorPrefix: "Erro na consulta",
                           }
-                        },
-                        {
-                          loadingMessage: "Buscando dados do CNPJ...",
-                          errorPrefix: "Erro na consulta",
-                        }
-                      );
-                    }
-                  }}
-                  required
-                  placeholder="00.000.000/0000-00"
-                />
+                        );
+                      }
+                    }}
+                    required
+                    placeholder="00.000.000/0000-00"
+                  />
+                  
+                  {/* Indicador de status do CNPJ */}
+                  {cnpjStatus && (
+                    <div className={`cnpj-status cnpj-status--${cnpjStatus}`}>
+                      {cnpjStatus === "disponivel" ? (
+                        <>
+                          <span className="status-icon">✓</span>
+                          <span>CNPJ disponível para cadastro</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="status-icon">⚠</span>
+                          <span>CNPJ já cadastrado no sistema</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
                 <span className="detail-value">{form.cnpj || "—"}</span>
               )}
@@ -406,6 +452,11 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
                 <InputMask
                   className="mask-input"
                   mask="(99) 99999-9999"
+                  formatChars={{
+                    "9": "[0-9]",
+                    "?": "[0-9 ]"
+                  }}
+                  maskChar={null}
                   value={form.telefone}
                   onChange={(e) => handleChange("telefone", e.target.value)}
                   placeholder="(00) 00000-0000"
@@ -475,10 +526,6 @@ const CompanyRegisterModal = ({ company, onClose, onSave }) => {
                     }}
                     placeholder="00000-000"
                   />
-
-                  {loadingCep && (
-                    <small className="loading-text">Buscando CEP...</small>
-                  )}
                 </div>
               ) : (
                 <span className="detail-value">{form.cep || "—"}</span>

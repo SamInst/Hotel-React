@@ -1,6 +1,7 @@
 // src/components/SingleDatePicker.jsx
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
+import InputMask from "react-input-mask";
 import "./DateRangePicker.css";
 
 const SingleDatePicker = ({
@@ -37,7 +38,16 @@ const SingleDatePicker = ({
     if (m) {
       const [_, dd, mm, yyyy] = m;
       const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00`);
-      if (!Number.isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+      if (!Number.isNaN(d.getTime())) {
+        // Valida se é uma data real
+        if (
+          d.getDate() === parseInt(dd, 10) &&
+          d.getMonth() + 1 === parseInt(mm, 10) &&
+          d.getFullYear() === parseInt(yyyy, 10)
+        ) {
+          return d.toISOString().slice(0, 10);
+        }
+      }
       return "";
     }
 
@@ -58,16 +68,52 @@ const SingleDatePicker = ({
   };
 
   const [typed, setTyped] = useState(value ? formatPt(value) : "");
+  
   useEffect(() => {
     setTyped(value ? formatPt(value) : "");
-    if (value) setCurrentMonth(new Date(value + "T00:00:00"));
+    if (value) {
+      const dateObj = new Date(value + "T00:00:00");
+      if (!Number.isNaN(dateObj.getTime())) {
+        setCurrentMonth(dateObj);
+      }
+    }
   }, [value]);
 
   const commitTyped = () => {
     const iso = parseToISO(typed);
-    if (!iso) return;
+    if (!iso) {
+      // Se a data digitada for inválida, restaura o valor anterior
+      setTyped(value ? formatPt(value) : "");
+      return;
+    }
     const clamped = clampISO(iso, minDate, maxDate);
     onChange(clamped);
+    
+    // Atualiza o calendário para o mês da data digitada
+    const dateObj = new Date(clamped + "T00:00:00");
+    if (!Number.isNaN(dateObj.getTime())) {
+      setCurrentMonth(dateObj);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const newValue = e.target.value;
+    setTyped(newValue);
+    
+    // Tenta converter automaticamente quando completar a máscara
+    if (!newValue.includes("_") && newValue.length === 10) {
+      const iso = parseToISO(newValue);
+      if (iso) {
+        const clamped = clampISO(iso, minDate, maxDate);
+        onChange(clamped);
+        
+        // Atualiza o calendário
+        const dateObj = new Date(clamped + "T00:00:00");
+        if (!Number.isNaN(dateObj.getTime())) {
+          setCurrentMonth(dateObj);
+        }
+      }
+    }
   };
 
   // posicionamento do dropdown
@@ -219,6 +265,7 @@ const SingleDatePicker = ({
             return (
               <button
                 key={idx}
+                type="button"
                 className={`day ${!isCurrentMonth ? "other-month" : ""} ${selected ? "selected" : ""}`}
                 disabled={isDisabled}
                 onClick={() => handleDateClick(date)}
@@ -236,14 +283,21 @@ const SingleDatePicker = ({
   return (
     <div className={`single-date-picker ${className}`}>
       <div ref={triggerRef} className={`date-input ${isOpen ? "active" : ""} ${disabled ? "disabled" : ""}`}>
-        <input
+        <InputMask
+          mask="99/99/9999"
+          maskChar="_"
           className="date-text-input"
           type="text"
           placeholder={placeholder}
           value={typed}
-          onChange={(e) => setTyped(e.target.value)}
+          onChange={handleInputChange}
           onBlur={commitTyped}
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); commitTyped(); } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitTyped();
+            }
+          }}
           disabled={disabled}
         />
         <button
