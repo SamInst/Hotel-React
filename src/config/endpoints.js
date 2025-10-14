@@ -148,8 +148,8 @@ export function adaptRoomsResponseToUI(roomsResponse) {
       const finalStatus = du ? ROOM_STATUS_CODE.DIARIA_ENCERRADA : status;
 
       return {
-        numero: Number(r?.id),   // "número" na UI = id do quarto
-        tipo,                    // nome da categoria
+        numero: Number(r?.id),    // "número" na UI = id do quarto
+        tipo,                     // nome da categoria
         status: finalStatus,
         pessoas,
         beds,
@@ -160,10 +160,12 @@ export function adaptRoomsResponseToUI(roomsResponse) {
         saida,
         horaEntrada,
         horaSaida,
+        descricao: r?.info || "", // <- Agora inclui a descrição 'info'
       };
     });
   });
 }
+
 
 // Categoria[] -> opções para combobox [{value,label}]
 export function adaptCategoriesToOptions(categories) {
