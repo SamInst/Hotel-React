@@ -8,6 +8,7 @@ import {
   listarEstados,
   listarMunicipios,
 } from "../services/enderecoService";
+import { pessoaService } from "../services/pessoaService";
 import SingleDatePicker from "../components/SingleDatePicker.jsx";
 import { useUIFeedback, LoadingOverlay, Toasts } from "../config/uiUtilities";
 
@@ -22,75 +23,66 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     notifyError,
   } = useUIFeedback();
 
-  const [editing, setEditing] = useState(!user); // Se não tem user, está criando (editing = true)
+  const [editing, setEditing] = useState(!user);
   const [form, setForm] = useState({
     nome: "",
-    data_nascimento: "",
+    dataNascimento: "",
     cpf: "",
     rg: "",
     email: "",
     telefone: "",
-    fk_pais: "",
-    fk_estado: "",
-    fk_municipio: "",
+    fkPais: "",
+    fkEstado: "",
+    fkMunicipio: "",
     cep: "",
     endereco: "",
     numero: "",
     complemento: "",
     bairro: "",
     sexo: "",
+    idade: "",
   });
 
   const [paises, setPaises] = useState([]);
   const [estados, setEstados] = useState([]);
   const [municipios, setMunicipios] = useState([]);
-  const [cpfStatus, setCpfStatus] = useState(null); // null | 'disponivel' | 'cadastrado'
+  const [cpfStatus, setCpfStatus] = useState(null);
 
-  // Carregar países/estados na abertura
   useEffect(() => {
-    listarPaises()
-      .then(setPaises)
-      .catch(() => setPaises([]));
-    listarEstados()
-      .then(setEstados)
-      .catch(() => setEstados([]));
+    listarPaises().then(setPaises).catch(() => setPaises([]));
+    listarEstados().then(setEstados).catch(() => setEstados([]));
   }, []);
 
-  // Carregar dados do usuário se existir
   useEffect(() => {
     if (user) {
-      console.log("Carregando dados do usuário:", user);
       setForm({
-        nome: user.nome || user.name || "",
-        data_nascimento: user.data_nascimento || "",
+        nome: user.nome || "",
+        dataNascimento: user.dataNascimento || "",
         cpf: user.cpf || "",
         rg: user.rg || "",
         email: user.email || "",
-        telefone: user.telefone || user.phone || "",
-        fk_pais: user.fk_pais || "",
-        fk_estado: user.fk_estado || "",
-        fk_municipio: user.fk_municipio || "",
+        telefone: user.telefone || "",
+        fkPais: user.fkPais || "",
+        fkEstado: user.fkEstado || "",
+        fkMunicipio: user.fkMunicipio || "",
         cep: user.cep || "",
         endereco: user.endereco || "",
         numero: user.numero || "",
         complemento: user.complemento || "",
         bairro: user.bairro || "",
         sexo: user.sexo || "",
+        idade: user.idade || "",
       });
       setEditing(false);
     }
   }, [user]);
 
-  // Atualiza lista de municípios conforme estado selecionado
   useEffect(() => {
-    if (form.fk_estado) {
-      listarMunicipios(form.fk_estado)
-        .then(setMunicipios)
-        .catch(() => setMunicipios([]));
+    if (form.fkEstado) {
+      listarMunicipios(form.fkEstado).then(setMunicipios).catch(() => setMunicipios([]));
     }
-  }, [form.fk_estado]);
+  }, [form.fkEstado]);
 
-  // Função utilitária para normalizar textos (remove acentos e deixa minúsculo)
   const normalize = (str) =>
     str
       ?.normalize("NFD")
@@ -98,15 +90,12 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
       .toLowerCase()
       .trim() || "";
 
-  // Debounce global para evitar múltiplas buscas seguidas
   let cepTimeout = null;
 
   const handleBuscarCep = async (cep) => {
     const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length !== 8) return; // só busca com 8 dígitos completos
-
+    if (cleanCep.length !== 8) return;
     if (cepTimeout) clearTimeout(cepTimeout);
-
     cepTimeout = setTimeout(async () => {
       await executeWithFeedback(
         async () => {
@@ -115,52 +104,36 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             notifyError("CEP não encontrado.");
             return;
           }
-
           const ufSigla = endereco.uf;
           const cidadeNome = endereco.localidade;
-
-          // Busca estados do país Brasil (id=1)
           const estadosData = await listarEstados(1);
-
-          // Encontra estado pelo nome ou sigla
           const estadoEncontrado = estadosData.find(
             (e) =>
               normalize(e.nome) === normalize(endereco.estado) ||
               normalize(e.sigla || "") === normalize(ufSigla)
           );
-
           let municipioEncontrado = null;
-
-          // Busca municípios apenas se o estado foi encontrado
           if (estadoEncontrado) {
             const municipiosData = await listarMunicipios(estadoEncontrado.id);
-
             municipioEncontrado = municipiosData.find(
               (m) => normalize(m.nome) === normalize(cidadeNome)
             );
           }
-
-          // Atualiza o formulário com os dados do endereço
           setForm((prev) => ({
             ...prev,
             endereco: endereco.logradouro || "",
             bairro: endereco.bairro || "",
             complemento: endereco.complemento || "",
-            fk_pais: 1, // Brasil padrão
-            fk_estado: estadoEncontrado?.id || "",
-            fk_municipio: municipioEncontrado?.id || "",
+            fkPais: 1,
+            fkEstado: estadoEncontrado?.id || "",
+            fkMunicipio: municipioEncontrado?.id || "",
           }));
-
           if (estadoEncontrado && municipioEncontrado) {
             notifySuccess("Endereço preenchido automaticamente!");
           } else if (estadoEncontrado && !municipioEncontrado) {
-            notifyError(
-              `Estado encontrado, mas município não localizado (${cidadeNome}).`
-            );
+            notifyError(`Estado encontrado, mas município não localizado (${cidadeNome}).`);
           } else {
-            notifyError(
-              "Não foi possível identificar o estado/município do CEP."
-            );
+            notifyError("Não foi possível identificar o estado/município do CEP.");
           }
         },
         {
@@ -168,47 +141,117 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
           errorPrefix: "Erro ao buscar CEP",
         }
       );
-    }, 500); // aguarda 500ms após o último dígito
+    }, 500);
+  };
+
+  const calcularIdade = (dataNascimento) => {
+    if (!dataNascimento) return null;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const mes = hoje.getMonth() - nascimento.getMonth();
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
   };
 
   const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-
-    // Limpa o status do CPF se o usuário modificar o campo
+    setForm((prev) => {
+      const updated = { ...prev, [field]: value };
+      if (field === "dataNascimento") {
+        updated.idade = calcularIdade(value);
+      }
+      return updated;
+    });
     if (field === "cpf") {
       setCpfStatus(null);
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave(form);
+  const verificarCpfCadastrado = async (cpf) => {
+    const cleanCpf = cpf.replace(/\D/g, "");
+    try {
+      const pessoa = await pessoaService.buscarPorCpf(cleanCpf);
+      return pessoa !== null;
+    } catch (error) {
+      return false;
+    }
   };
 
-  const handleCancel = () => {
-    if (user) {
-      // Restaurar dados originais
-      setForm({
-        nome: user.nome || user.name || "",
-        data_nascimento: user.data_nascimento || "",
-        cpf: user.cpf || "",
-        rg: user.rg || "",
-        email: user.email || "",
-        telefone: user.telefone || user.phone || "",
-        fk_pais: user.fk_pais || "",
-        fk_estado: user.fk_estado || "",
-        fk_municipio: user.fk_municipio || "",
-        cep: user.cep || "",
-        endereco: user.endereco || "",
-        numero: user.numero || "",
-        complemento: user.complemento || "",
-        bairro: user.bairro || "",
-        sexo: user.sexo || "",
-      });
-      setEditing(false);
-    } else {
-      onClose();
+  const limparCampos = () => {
+    setForm({
+      nome: "",
+      dataNascimento: "",
+      cpf: "",
+      rg: "",
+      email: "",
+      telefone: "",
+      fkPais: "",
+      fkEstado: "",
+      fkMunicipio: "",
+      cep: "",
+      endereco: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      sexo: "",
+      idade: "",
+    });
+    setCpfStatus(null);
+    setMunicipios([]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (cpfStatus === "cadastrado" && !user) {
+      notifyError("Este CPF já está cadastrado!");
+      return;
     }
+    await executeWithFeedback(
+      async () => {
+        const dadosPessoa = {
+          id: user?.id || null,
+          nome: form.nome,
+          dataNascimento: form.dataNascimento || null,
+          cpf: form.cpf.replace(/\D/g, ""),
+          rg: form.rg?.replace(/\D/g, "") || null,
+          email: form.email || null,
+          telefone: form.telefone?.replace(/\D/g, "") || null,
+          fkPais: form.fkPais ? parseInt(form.fkPais) : null,
+          fkEstado: form.fkEstado ? parseInt(form.fkEstado) : null,
+          fkMunicipio: form.fkMunicipio ? parseInt(form.fkMunicipio) : null,
+          cep: form.cep?.replace(/\D/g, "") || null,
+          endereco: form.endereco || null,
+          numero: form.numero || null,
+          complemento: form.complemento || null,
+          bairro: form.bairro || null,
+          sexo: form.sexo ? parseInt(form.sexo) : null,
+          idade: form.idade || null,
+          hospedado: user?.hospedado || false,
+          vezesHospedado: user?.vezesHospedado || 0,
+          clienteNovo: user?.clienteNovo !== undefined ? user.clienteNovo : true,
+          empresasVinculadas: user?.empresasVinculadas || [],
+        };
+        let pessoaSalva;
+        if (user?.id) {
+          pessoaSalva = await pessoaService.atualizar(user.id, dadosPessoa);
+        } else {
+          pessoaSalva = await pessoaService.cadastrar(dadosPessoa);
+        }
+        notifySuccess(
+          user?.id ? "Pessoa atualizada com sucesso!" : "Pessoa cadastrada com sucesso!"
+        );
+        if (onSave) {
+          onSave(pessoaSalva);
+        }
+        // Modal NÃO será fechado automaticamente!
+      },
+      {
+        loadingMessage: user?.id ? "Atualizando pessoa..." : "Cadastrando pessoa...",
+        errorPrefix: user?.id ? "Erro ao atualizar" : "Erro ao cadastrar",
+      }
+    );
   };
 
   const getPaisNome = (id) => {
@@ -243,21 +286,6 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
     } catch {
       return "—";
     }
-  };
-
-  // Mock de verificação de CPF - substituir pelo endpoint real
-  const verificarCpfCadastrado = async (cpf) => {
-    // Simula uma chamada à API
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Mock: considera alguns CPFs como já cadastrados
-    const cpfsCadastrados = [
-      "12345678909",
-      "98765432100",
-      "11122233344",
-    ];
-
-    return cpfsCadastrados.includes(cpf);
   };
 
   return (
@@ -295,17 +323,17 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
             <div className="detail-item">
               <label>Data de Nascimento</label>
               {editing ? (
-                <div style={{ width: '100%' }}>
+                <div style={{ width: "100%" }}>
                   <SingleDatePicker
-                    value={form.data_nascimento}
-                    onChange={(iso) => handleChange("data_nascimento", iso)}
+                    value={form.dataNascimento}
+                    onChange={(iso) => handleChange("dataNascimento", iso)}
                     placeholder="—"
-                    maxDate={new Date()} // bloqueia datas futuras
+                    maxDate={new Date()}
                   />
                 </div>
               ) : (
                 <span className="detail-value">
-                  {formatDate(form.data_nascimento)}
+                  {formatDate(form.dataNascimento)}
                 </span>
               )}
             </div>
@@ -339,15 +367,12 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                     onChange={async (e) => {
                       const cpfValue = e.target.value;
                       handleChange("cpf", cpfValue);
-
                       const clean = cpfValue.replace(/\D/g, "");
-                      if (clean.length === 11) {
+                      if (clean.length === 11 && !user) {
                         await executeWithFeedback(
                           async () => {
-                            // Verifica se o CPF já está cadastrado
                             const jaCadastrado = await verificarCpfCadastrado(clean);
                             setCpfStatus(jaCadastrado ? "cadastrado" : "disponivel");
-
                             if (jaCadastrado) {
                               notifyError("Este CPF já está cadastrado no sistema!");
                             } else {
@@ -363,9 +388,8 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                     }}
                     required
                     placeholder="000.000.000-00"
+                    disabled={!!user}
                   />
-
-                  {/* Indicador de status do CPF */}
                   {cpfStatus && (
                     <div className={`cnpj-status cnpj-status--${cpfStatus}`}>
                       {cpfStatus === "disponivel" ? (
@@ -519,8 +543,8 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>País</label>
               {editing ? (
                 <select
-                  value={form.fk_pais}
-                  onChange={(e) => handleChange("fk_pais", e.target.value)}
+                  value={form.fkPais}
+                  onChange={(e) => handleChange("fkPais", e.target.value)}
                 >
                   <option value="">Selecione</option>
                   {paises.map((p) => (
@@ -531,7 +555,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 </select>
               ) : (
                 <span className="detail-value">
-                  {getPaisNome(form.fk_pais)}
+                  {getPaisNome(form.fkPais)}
                 </span>
               )}
             </div>
@@ -539,8 +563,8 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>Estado</label>
               {editing ? (
                 <select
-                  value={form.fk_estado}
-                  onChange={(e) => handleChange("fk_estado", e.target.value)}
+                  value={form.fkEstado}
+                  onChange={(e) => handleChange("fkEstado", e.target.value)}
                 >
                   <option value="">Selecione</option>
                   {estados.map((e) => (
@@ -551,7 +575,7 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 </select>
               ) : (
                 <span className="detail-value">
-                  {getEstadoNome(form.fk_estado)}
+                  {getEstadoNome(form.fkEstado)}
                 </span>
               )}
             </div>
@@ -559,8 +583,8 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
               <label>Município</label>
               {editing ? (
                 <select
-                  value={form.fk_municipio}
-                  onChange={(e) => handleChange("fk_municipio", e.target.value)}
+                  value={form.fkMunicipio}
+                  onChange={(e) => handleChange("fkMunicipio", e.target.value)}
                 >
                   <option value="">Selecione</option>
                   {municipios.map((m) => (
@@ -571,21 +595,35 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
                 </select>
               ) : (
                 <span className="detail-value">
-                  {getMunicipioNome(form.fk_municipio)}
+                  {getMunicipioNome(form.fkMunicipio)}
                 </span>
               )}
             </div>
           </div>
+
+          {user && user.empresasVinculadas && user.empresasVinculadas.length > 0 && (
+            <>
+              <h3>Empresas Vinculadas</h3>
+              <div className="empresas-vinculadas">
+                {user.empresasVinculadas.map((empresa) => (
+                  <div key={empresa.id} className="empresa-card">
+                    <strong>{empresa.nomeEmpresa}</strong>
+                    <span>CNPJ: {empresa.cnpj}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="modal-footer">
             {editing ? (
               <>
                 <button
                   type="button"
-                  className="cancel-btn"
-                  onClick={handleCancel}
+                  className="clear-btn"
+                  onClick={limparCampos}
                 >
-                  Cancelar
+                  Limpar Campos
                 </button>
                 <button type="submit" className="save-btn">
                   Salvar
@@ -603,7 +641,6 @@ const UserRegisterModal = ({ user, onClose, onSave }) => {
           </div>
         </form>
 
-        {/* FEEDBACK VISUAL */}
         <LoadingOverlay show={loading} label={loadingMessage} />
         <Toasts toasts={toasts} onClose={closeToast} />
       </div>
